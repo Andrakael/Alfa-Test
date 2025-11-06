@@ -34,11 +34,8 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, onTabChange
           <div className="flex justify-between items-center h-18">
             <div className="flex items-center">
               <div className="flex-shrink-0 flex items-center">
-                <div className="relative">
-                  <div className="bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 p-3 rounded-xl shadow-lg animate-pulse">
-                    <Package className="h-7 w-7 text-white" />
-                  </div>
-                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-ping"></div>
+                <div className="bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 p-3 rounded-xl shadow-lg">
+                  <Package className="h-7 w-7 text-white" />
                 </div>
                 <div className="ml-4">
                   <span className="text-2xl font-black bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
@@ -87,7 +84,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, onTabChange
                   <button
                     key={tab.id}
                     onClick={() => onTabChange(tab.id)}
-                    className={`w-full group relative overflow-hidden rounded-2xl p-5 text-left transition-all duration-500 transform hover:scale-105 hover:rotate-1 ${
+                    className={`w-full group relative overflow-hidden rounded-2xl p-5 text-left transition-all duration-300 transform hover:scale-105 ${
                       isActive
                         ? 'bg-gradient-to-br ' + tab.color + ' text-white shadow-2xl shadow-purple-500/25 border border-white/20'
                         : 'bg-white/80 hover:bg-white hover:shadow-xl text-gray-700 hover:text-gray-900 border border-gray-200/50 hover:border-purple-300/50'
