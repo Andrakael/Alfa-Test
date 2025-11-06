@@ -25,6 +25,7 @@
     "deploy": "npm run build",
     "serve": "npx serve -s build"
   },
+  "homepage": ".",
   "eslintConfig": {
     "extends": [
       "react-app",
