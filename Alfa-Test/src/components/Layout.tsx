@@ -51,7 +51,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, onTabChange
       <div className="flex">
         {/* Main Content */}
         <main className="flex-1 p-4 md:pr-80">
-          <div className="max-w-6xl">
+          <div className="max-w-6xl mx-auto">
             {children}
           </div>
         </main>
