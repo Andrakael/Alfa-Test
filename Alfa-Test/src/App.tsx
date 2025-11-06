@@ -17,7 +17,10 @@ import { Home } from './components/Home';
 import { Plus, Edit, Trash2, TrendingUp, TrendingDown, DollarSign, Package, Users, Eye, Undo2, BarChart3, ShoppingCart, ChevronDown, ChevronRight } from 'lucide-react';
 
 function App() {
-  const [activeTab, setActiveTab] = useState('home');
+  console.log('App component loading...');
+  
+  try {
+    const [activeTab, setActiveTab] = useState('home');
   const [produtos, setProdutos] = useLocalStorage<Produto[]>('produtos', [
     {
       id: 'prod-1',
@@ -1320,6 +1323,10 @@ renderProdutos = () => (
       )}
     </div>
   );
+  } catch (error) {
+    console.error('Error in App component:', error);
+    return <div style={{padding: '20px', color: 'red'}}>Erro ao carregar aplicação: {String(error)}</div>;
+  }
 }
 
 export default App;
