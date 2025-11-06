@@ -1,0 +1,13 @@
+{
+  "functions": {
+    "app/[[...route]].js": {
+      "includeFiles": "build/**"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
