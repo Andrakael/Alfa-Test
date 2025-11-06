@@ -21,19 +21,33 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, onTabChange
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-pink-50/30 relative overflow-hidden">
+      {/* Background decorative elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-purple-400/20 to-pink-400/20 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-br from-cyan-400/20 to-blue-400/20 rounded-full blur-3xl animate-pulse" style={{animationDelay: '2s'}}></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-br from-purple-300/10 to-pink-300/10 rounded-full blur-3xl animate-pulse" style={{animationDelay: '4s'}}></div>
+      </div>
       {/* Header */}
-      <header className="bg-white shadow-lg border-b border-gray-200">
+      <header className="bg-gradient-to-r from-slate-900 via-purple-900 to-slate-900 shadow-2xl border-b border-purple-500/20 backdrop-blur-sm">
         <div className="px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+          <div className="flex justify-between items-center h-18">
             <div className="flex items-center">
               <div className="flex-shrink-0 flex items-center">
-                <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-2 rounded-lg">
-                  <Package className="h-6 w-6 text-white" />
+                <div className="relative">
+                  <div className="bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500 p-3 rounded-xl shadow-lg animate-pulse">
+                    <Package className="h-7 w-7 text-white" />
+                  </div>
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-ping"></div>
                 </div>
-                <span className="ml-3 text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
-                  Sistema de Gestão
-                </span>
+                <div className="ml-4">
+                  <span className="text-2xl font-black bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+                    NEXUS
+                  </span>
+                  <div className="text-sm text-gray-300 font-medium">
+                    Sistema de Gestão IA
+                  </div>
+                </div>
               </div>
             </div>
             
@@ -57,9 +71,14 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, onTabChange
         </main>
 
         {/* Right Sidebar - Desktop */}
-        <aside className="hidden md:block fixed right-0 top-16 h-[calc(100vh-4rem)] w-72 bg-white shadow-2xl border-l border-gray-200 overflow-y-auto">
+        <aside className="hidden md:block fixed right-0 top-18 h-[calc(100vh-4.5rem)] w-80 bg-gradient-to-b from-slate-50 to-white shadow-2xl border-l border-purple-200/50 overflow-y-auto backdrop-blur-sm">
           <div className="p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-6">Menu de Navegação</h2>
+            <div className="mb-8">
+              <h2 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent mb-2">
+                Central de Comando
+              </h2>
+              <div className="h-1 w-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full"></div>
+            </div>
             <nav className="space-y-3">
               {tabs.map((tab, index) => {
                 const Icon = tab.icon;
@@ -68,10 +87,10 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, onTabChange
                   <button
                     key={tab.id}
                     onClick={() => onTabChange(tab.id)}
-                    className={`w-full group relative overflow-hidden rounded-xl p-4 text-left transition-all duration-300 transform hover:scale-105 ${
+                    className={`w-full group relative overflow-hidden rounded-2xl p-5 text-left transition-all duration-500 transform hover:scale-105 hover:rotate-1 ${
                       isActive
-                        ? 'bg-gradient-to-r ' + tab.color + ' text-white shadow-lg'
-                        : 'bg-gray-50 hover:bg-gray-100 text-gray-700 hover:text-gray-900'
+                        ? 'bg-gradient-to-br ' + tab.color + ' text-white shadow-2xl shadow-purple-500/25 border border-white/20'
+                        : 'bg-white/80 hover:bg-white hover:shadow-xl text-gray-700 hover:text-gray-900 border border-gray-200/50 hover:border-purple-300/50'
                     }`}
                     style={{
                       animationDelay: `${index * 100}ms`
@@ -101,10 +120,18 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, onTabChange
                       </div>
                     </div>
                     
-                    {/* Active indicator */}
+                    {/* Active indicator & Effects */}
                     {isActive && (
-                      <div className="absolute left-0 top-0 bottom-0 w-1 bg-white rounded-r-full"></div>
+                      <>
+                        <div className="absolute left-0 top-0 bottom-0 w-2 bg-white rounded-r-full shadow-lg"></div>
+                        <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent rounded-2xl"></div>
+                        <div className="absolute top-2 right-2 w-2 h-2 bg-white/30 rounded-full animate-pulse"></div>
+                        <div className="absolute bottom-2 right-4 w-1 h-1 bg-white/40 rounded-full animate-ping"></div>
+                      </>
                     )}
+                    
+                    {/* Hover glow effect */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-purple-500/0 via-purple-500/5 to-pink-500/0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   </button>
                 );
               })}
