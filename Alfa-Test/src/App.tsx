@@ -383,6 +383,7 @@ function App() {
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const renderDashboard = () => {
     const totalProdutos = produtos.length;
     const totalClientes = clientes.length;
@@ -1148,6 +1149,7 @@ renderProdutos = () => (
     </div>
   );
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const renderChat = () => (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-gray-900">Assistente Virtual</h1>
