@@ -750,7 +750,7 @@ renderProdutos = () => (
                 Email
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Telefone
+                Contato
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Total Gasto
@@ -772,10 +772,10 @@ renderProdutos = () => (
                     {cliente.nome}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {cliente.email}
+                    {cliente.email || '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {cliente.telefone}
+                    {cliente.telefone || '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     R$ {totalGasto.toFixed(2)}

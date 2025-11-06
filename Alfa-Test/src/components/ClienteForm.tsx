@@ -52,32 +52,32 @@ export const ClienteForm: React.FC<ClienteFormProps> = ({ onSubmit, onCancel, ed
             <label className="block text-sm font-medium text-gray-700">Email</label>
             <input
               type="email"
-              required
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+              placeholder="email@exemplo.com (opcional)"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Telefone</label>
+            <label className="block text-sm font-medium text-gray-700">Contato</label>
             <input
               type="tel"
-              required
               value={formData.telefone}
               onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
               className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+              placeholder="(11) 99999-9999 (opcional)"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Endereço</label>
-            <textarea
-              required
+            <label className="block text-sm font-medium text-gray-700">CPF</label>
+            <input
+              type="text"
               value={formData.endereco}
               onChange={(e) => setFormData({ ...formData, endereco: e.target.value })}
               className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-              rows={3}
+              placeholder="000.000.000-00 (opcional)"
             />
           </div>
 

@@ -91,12 +91,12 @@ export const ClientePanel: React.FC<ClientePanelProps> = ({
             <p className="text-sm text-gray-900">{cliente.email}</p>
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-500">Telefone</p>
-            <p className="text-sm text-gray-900">{cliente.telefone}</p>
+            <p className="text-sm font-medium text-gray-500">Contato</p>
+            <p className="text-sm text-gray-900">{cliente.telefone || 'Não informado'}</p>
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-500">Endereço</p>
-            <p className="text-sm text-gray-900">{cliente.endereco}</p>
+            <p className="text-sm font-medium text-gray-500">CPF</p>
+            <p className="text-sm text-gray-900">{cliente.endereco || 'Não informado'}</p>
           </div>
         </div>
       </div>

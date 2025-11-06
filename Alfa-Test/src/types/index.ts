@@ -19,9 +19,9 @@ export interface Produto {
 export interface Cliente {
   id: string;
   nome: string;
-  email: string;
-  telefone: string;
-  endereco: string;
+  email?: string;
+  telefone?: string;
+  endereco?: string; // Agora representa CPF
   createdAt: Date;
 }
 
