@@ -252,6 +252,7 @@ function App() {
 
   const handleVenda = (vendaData: {
     clienteId: string;
+    numeroPedido?: string;
     itens: Array<{
       produtoId: string;
       quantidade: number;
@@ -273,6 +274,7 @@ function App() {
         tipo: 'saida',
         produtoId: item.produtoId,
         clienteId: vendaData.clienteId,
+        numeroPedido: vendaData.numeroPedido,
         quantidade: item.quantidade,
         valorUnitario: item.valorUnitario,
         valorTotal: item.valorTotal,
@@ -1081,6 +1083,9 @@ renderProdutos = () => (
                 Cliente
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Nº Pedido
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Quantidade
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -1117,6 +1122,9 @@ renderProdutos = () => (
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {cliente?.nome || '-'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {transacao.numeroPedido || '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {transacao.quantidade}

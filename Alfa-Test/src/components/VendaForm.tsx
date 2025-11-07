@@ -15,6 +15,7 @@ interface VendaFormProps {
   categorias: Categoria[];
   onSubmit: (venda: {
     clienteId: string;
+    numeroPedido?: string;
     itens: ItemVenda[];
     valorTotal: number;
     observacoes?: string;
@@ -30,6 +31,7 @@ export const VendaForm: React.FC<VendaFormProps> = ({
   onCancel 
 }) => {
   const [clienteId, setClienteId] = useState('');
+  const [numeroPedido, setNumeroPedido] = useState('');
   const [itens, setItens] = useState<ItemVenda[]>([]);
   const [observacoes, setObservacoes] = useState('');
   const [produtoSelecionado, setProdutoSelecionado] = useState('');
@@ -122,6 +124,7 @@ export const VendaForm: React.FC<VendaFormProps> = ({
 
     onSubmit({
       clienteId,
+      numeroPedido: numeroPedido || undefined,
       itens,
       valorTotal: valorTotalVenda,
       observacoes: observacoes || undefined
@@ -151,22 +154,40 @@ export const VendaForm: React.FC<VendaFormProps> = ({
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Seleção do Cliente */}
+          {/* Seleção do Cliente e Número do Pedido */}
           <div className="bg-gray-50 p-4 rounded-lg">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Cliente</label>
-            <select
-              required
-              value={clienteId}
-              onChange={(e) => setClienteId(e.target.value)}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
-            >
-              <option value="">Selecione um cliente</option>
-              {clientes.map((cliente) => (
-                <option key={cliente.id} value={cliente.id}>
-                  {cliente.nome} - {cliente.email}
-                </option>
-              ))}
-            </select>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Cliente *</label>
+                <select
+                  required
+                  value={clienteId}
+                  onChange={(e) => setClienteId(e.target.value)}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                >
+                  <option value="">Selecione um cliente</option>
+                  {clientes.map((cliente) => (
+                    <option key={cliente.id} value={cliente.id}>
+                      {cliente.nome} - {cliente.email || 'Sem email'}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Número do Pedido
+                  <span className="text-gray-500 text-xs ml-1">(Código do fornecedor - opcional)</span>
+                </label>
+                <input
+                  type="text"
+                  value={numeroPedido}
+                  onChange={(e) => setNumeroPedido(e.target.value)}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                  placeholder="Ex: PED-2024-001, FOR-12345..."
+                />
+              </div>
+            </div>
           </div>
 
           {/* Adicionar Produtos */}

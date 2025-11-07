@@ -30,6 +30,7 @@ export interface Transacao {
   tipo: 'entrada' | 'saida';
   produtoId: string;
   clienteId?: string;
+  numeroPedido?: string;
   quantidade: number;
   valorUnitario: number;
   valorTotal: number;
