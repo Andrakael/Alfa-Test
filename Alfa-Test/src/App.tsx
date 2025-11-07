@@ -7,14 +7,14 @@ import { ChatBot } from './components/ChatBot';
 import { ClientePanel } from './components/ClientePanel';
 import { ProdutoPanel } from './components/ProdutoPanel';
 import { useLocalStorage } from './hooks/useLocalStorage';
-import { Produto, Cliente, Transacao, Categoria } from './types';
+import { Produto, Cliente, Transacao, Categoria, AnexoPDF } from './types';
 import { ChatBot as ChatBotService } from './services/chatBot';
 import { CategoriaForm } from './components/CategoriaForm';
 import { VendaForm } from './components/VendaForm';
 import { VendaDetalhes } from './components/VendaDetalhes';
 import { Configuracoes } from './components/Configuracoes';
 import { Home } from './components/Home';
-import { Plus, Edit, Trash2, TrendingUp, TrendingDown, DollarSign, Package, Users, Eye, Undo2, BarChart3, ShoppingCart, ChevronDown, ChevronRight } from 'lucide-react';
+import { Plus, Edit, Trash2, TrendingUp, TrendingDown, DollarSign, Package, Users, Eye, Undo2, BarChart3, ShoppingCart, ChevronDown, ChevronRight, FileText } from 'lucide-react';
 
 function App() {
   console.log('App component loading...');
@@ -261,6 +261,7 @@ function App() {
     }>;
     valorTotal: number;
     observacoes?: string;
+    anexos?: AnexoPDF[];
   }) => {
     const novasTransacoes: Transacao[] = [];
     const novosProdutos = [...produtos];
@@ -279,6 +280,7 @@ function App() {
         valorUnitario: item.valorUnitario,
         valorTotal: item.valorTotal,
         observacoes: vendaData.observacoes,
+        anexos: vendaData.anexos,
         createdAt: dataVenda
       };
       novasTransacoes.push(transacao);
@@ -1086,6 +1088,9 @@ renderProdutos = () => (
                 Nº Pedido
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Anexos
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Quantidade
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -1125,6 +1130,14 @@ renderProdutos = () => (
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {transacao.numeroPedido || '-'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {transacao.anexos && transacao.anexos.length > 0 ? (
+                        <div className="flex items-center space-x-1">
+                          <FileText className="h-4 w-4 text-blue-500" />
+                          <span className="text-blue-600 font-medium">{transacao.anexos.length}</span>
+                        </div>
+                      ) : '-'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {transacao.quantidade}

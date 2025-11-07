@@ -25,6 +25,15 @@ export interface Cliente {
   createdAt: Date;
 }
 
+export interface AnexoPDF {
+  id: string;
+  nome: string;
+  tipo: 'orcamento_fornecedor' | 'documento_empresa' | 'outros';
+  arquivo: string; // base64
+  tamanho: number;
+  dataUpload: Date;
+}
+
 export interface Transacao {
   id: string;
   tipo: 'entrada' | 'saida';
@@ -35,6 +44,7 @@ export interface Transacao {
   valorUnitario: number;
   valorTotal: number;
   observacoes?: string;
+  anexos?: AnexoPDF[];
   createdAt: Date;
 }
 

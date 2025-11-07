@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { X, Plus, Minus, Trash2, ShoppingCart, Calculator } from 'lucide-react';
-import { Produto, Cliente, Categoria } from '../types';
+import { X, Plus, Minus, Trash2, ShoppingCart, Calculator, Upload, FileText, Download } from 'lucide-react';
+import { Produto, Cliente, Categoria, AnexoPDF } from '../types';
 
 interface ItemVenda {
   produtoId: string;
@@ -19,6 +19,7 @@ interface VendaFormProps {
     itens: ItemVenda[];
     valorTotal: number;
     observacoes?: string;
+    anexos?: AnexoPDF[];
   }) => void;
   onCancel: () => void;
 }
@@ -36,6 +37,69 @@ export const VendaForm: React.FC<VendaFormProps> = ({
   const [observacoes, setObservacoes] = useState('');
   const [produtoSelecionado, setProdutoSelecionado] = useState('');
   const [quantidadeSelecionada, setQuantidadeSelecionada] = useState(1);
+  const [anexos, setAnexos] = useState<AnexoPDF[]>([]);
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>, tipo: AnexoPDF['tipo']) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validar se é PDF
+    if (file.type !== 'application/pdf') {
+      alert('Apenas arquivos PDF são permitidos!');
+      return;
+    }
+
+    // Validar tamanho (máximo 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Arquivo muito grande! Máximo 5MB permitido.');
+      return;
+    }
+
+    // Validar se já tem 3 anexos
+    if (anexos.length >= 3) {
+      alert('Máximo de 3 anexos permitidos por venda!');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const base64 = e.target?.result as string;
+      const novoAnexo: AnexoPDF = {
+        id: `anexo-${Date.now()}`,
+        nome: file.name,
+        tipo,
+        arquivo: base64,
+        tamanho: file.size,
+        dataUpload: new Date()
+      };
+      setAnexos([...anexos, novoAnexo]);
+    };
+    reader.readAsDataURL(file);
+    
+    // Limpar o input
+    event.target.value = '';
+  };
+
+  const removerAnexo = (anexoId: string) => {
+    setAnexos(anexos.filter(a => a.id !== anexoId));
+  };
+
+  const downloadAnexo = (anexo: AnexoPDF) => {
+    const link = document.createElement('a');
+    link.href = anexo.arquivo;
+    link.download = anexo.nome;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const formatarTamanho = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
 
   const adicionarItem = () => {
     if (!produtoSelecionado) return;
@@ -127,7 +191,8 @@ export const VendaForm: React.FC<VendaFormProps> = ({
       numeroPedido: numeroPedido || undefined,
       itens,
       valorTotal: valorTotalVenda,
-      observacoes: observacoes || undefined
+      observacoes: observacoes || undefined,
+      anexos: anexos.length > 0 ? anexos : undefined
     });
   };
 
@@ -368,6 +433,130 @@ export const VendaForm: React.FC<VendaFormProps> = ({
               rows={3}
               placeholder="Observações sobre a venda..."
             />
+          </div>
+
+          {/* Anexos PDF */}
+          <div className="bg-purple-50 p-4 rounded-lg">
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="text-lg font-medium text-gray-900 flex items-center">
+                <FileText className="h-5 w-5 mr-2" />
+                Anexos PDF ({anexos.length}/3)
+              </h4>
+              <span className="text-sm text-gray-500">Máximo 5MB por arquivo</span>
+            </div>
+
+            {/* Botões de Upload */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+              <div>
+                <label className="block">
+                  <input
+                    type="file"
+                    accept=".pdf"
+                    onChange={(e) => handleFileUpload(e, 'orcamento_fornecedor')}
+                    className="hidden"
+                    disabled={anexos.length >= 3}
+                  />
+                  <div className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${
+                    anexos.length >= 3 
+                      ? 'border-gray-300 bg-gray-100 cursor-not-allowed' 
+                      : 'border-purple-300 hover:border-purple-500 hover:bg-purple-100'
+                  }`}>
+                    <Upload className="h-6 w-6 mx-auto mb-2 text-purple-500" />
+                    <p className="text-sm font-medium text-gray-700">Orçamento Fornecedor</p>
+                    <p className="text-xs text-gray-500">Clique para anexar PDF</p>
+                  </div>
+                </label>
+              </div>
+
+              <div>
+                <label className="block">
+                  <input
+                    type="file"
+                    accept=".pdf"
+                    onChange={(e) => handleFileUpload(e, 'documento_empresa')}
+                    className="hidden"
+                    disabled={anexos.length >= 3}
+                  />
+                  <div className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${
+                    anexos.length >= 3 
+                      ? 'border-gray-300 bg-gray-100 cursor-not-allowed' 
+                      : 'border-blue-300 hover:border-blue-500 hover:bg-blue-100'
+                  }`}>
+                    <Upload className="h-6 w-6 mx-auto mb-2 text-blue-500" />
+                    <p className="text-sm font-medium text-gray-700">Documento Empresa</p>
+                    <p className="text-xs text-gray-500">Clique para anexar PDF</p>
+                  </div>
+                </label>
+              </div>
+
+              <div>
+                <label className="block">
+                  <input
+                    type="file"
+                    accept=".pdf"
+                    onChange={(e) => handleFileUpload(e, 'outros')}
+                    className="hidden"
+                    disabled={anexos.length >= 3}
+                  />
+                  <div className={`border-2 border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors ${
+                    anexos.length >= 3 
+                      ? 'border-gray-300 bg-gray-100 cursor-not-allowed' 
+                      : 'border-green-300 hover:border-green-500 hover:bg-green-100'
+                  }`}>
+                    <Upload className="h-6 w-6 mx-auto mb-2 text-green-500" />
+                    <p className="text-sm font-medium text-gray-700">Outros Documentos</p>
+                    <p className="text-xs text-gray-500">Clique para anexar PDF</p>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            {/* Lista de Anexos */}
+            {anexos.length > 0 && (
+              <div className="space-y-2">
+                <h5 className="text-sm font-medium text-gray-700">Arquivos Anexados:</h5>
+                {anexos.map((anexo) => (
+                  <div key={anexo.id} className="flex items-center justify-between bg-white p-3 rounded-lg border">
+                    <div className="flex items-center space-x-3">
+                      <div className={`p-2 rounded-lg ${
+                        anexo.tipo === 'orcamento_fornecedor' ? 'bg-purple-100' :
+                        anexo.tipo === 'documento_empresa' ? 'bg-blue-100' : 'bg-green-100'
+                      }`}>
+                        <FileText className={`h-4 w-4 ${
+                          anexo.tipo === 'orcamento_fornecedor' ? 'text-purple-600' :
+                          anexo.tipo === 'documento_empresa' ? 'text-blue-600' : 'text-green-600'
+                        }`} />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">{anexo.nome}</p>
+                        <p className="text-xs text-gray-500">
+                          {anexo.tipo === 'orcamento_fornecedor' ? 'Orçamento Fornecedor' :
+                           anexo.tipo === 'documento_empresa' ? 'Documento Empresa' : 'Outros'} • {formatarTamanho(anexo.tamanho)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        type="button"
+                        onClick={() => downloadAnexo(anexo)}
+                        className="p-1 text-gray-400 hover:text-gray-600"
+                        title="Baixar arquivo"
+                      >
+                        <Download className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removerAnexo(anexo.id)}
+                        className="p-1 text-red-400 hover:text-red-600"
+                        title="Remover arquivo"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Botões */}
