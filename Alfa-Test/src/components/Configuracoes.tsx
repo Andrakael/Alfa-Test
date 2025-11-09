@@ -126,15 +126,15 @@ export const Configuracoes: React.FC<ConfiguracoesProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <button
             onClick={onExportarDados}
-            className="flex items-center justify-center space-x-2 p-4 border-2 border-dashed border-green-300 rounded-lg hover:border-green-400 hover:bg-green-50 transition-colors"
+            className="flex items-center justify-center space-x-2 p-4 bg-green-500 hover:bg-green-600 text-white rounded-lg shadow-md hover:shadow-lg transition-all font-medium"
           >
-            <Download className="h-5 w-5 text-green-600" />
-            <span className="text-green-700 font-medium">Exportar Dados</span>
+            <Download className="h-5 w-5" />
+            <span>Exportar Dados</span>
           </button>
           
-          <label className="flex items-center justify-center space-x-2 p-4 border-2 border-dashed border-blue-300 rounded-lg hover:border-blue-400 hover:bg-blue-50 transition-colors cursor-pointer">
-            <Upload className="h-5 w-5 text-blue-600" />
-            <span className="text-blue-700 font-medium">Importar Dados</span>
+          <label className="flex items-center justify-center space-x-2 p-4 bg-blue-500 hover:bg-blue-600 text-white rounded-lg shadow-md hover:shadow-lg transition-all cursor-pointer font-medium">
+            <Upload className="h-5 w-5" />
+            <span>Importar Dados</span>
             <input
               type="file"
               accept=".json"
