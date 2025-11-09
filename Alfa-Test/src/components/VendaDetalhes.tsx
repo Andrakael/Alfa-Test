@@ -59,17 +59,29 @@ export const VendaDetalhes: React.FC<VendaDetalhesProps> = ({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center space-x-4">
-        <button
-          onClick={onBack}
-          className="p-2 hover:bg-gray-100 rounded-md"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Detalhes da Venda</h1>
-          <p className="text-gray-600">Venda #{vendaId.slice(-8)}</p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <button
+            onClick={onBack}
+            className="p-2 hover:bg-gray-100 rounded-md"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Detalhes da Venda</h1>
+            <p className="text-gray-600">
+              {new Date(primeiraTransacao.createdAt).toLocaleDateString('pt-BR')} às {new Date(primeiraTransacao.createdAt).toLocaleTimeString('pt-BR')}
+            </p>
+          </div>
         </div>
+        
+        {/* Número do Pedido - Destaque no Header */}
+        {primeiraTransacao.numeroPedido && (
+          <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-lg shadow-lg">
+            <p className="text-sm font-medium opacity-90">Nº do Pedido</p>
+            <p className="text-2xl font-bold">{primeiraTransacao.numeroPedido}</p>
+          </div>
+        )}
       </div>
 
       {/* Informações da Venda */}
