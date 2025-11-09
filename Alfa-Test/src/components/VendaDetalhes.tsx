@@ -74,14 +74,6 @@ export const VendaDetalhes: React.FC<VendaDetalhesProps> = ({
             </p>
           </div>
         </div>
-        
-        {/* Número do Pedido - Destaque no Header */}
-        {primeiraTransacao.numeroPedido && (
-          <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-6 py-3 rounded-lg shadow-lg">
-            <p className="text-sm font-medium opacity-90">Nº do Pedido</p>
-            <p className="text-2xl font-bold">{primeiraTransacao.numeroPedido}</p>
-          </div>
-        )}
       </div>
 
       {/* Informações da Venda */}
@@ -177,21 +169,7 @@ export const VendaDetalhes: React.FC<VendaDetalhesProps> = ({
           )}
         </div>
 
-        {/* Número do Pedido */}
-        {primeiraTransacao.numeroPedido && (
-          <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <div className="flex items-center space-x-2">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <FileText className="h-5 w-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-blue-900">Número do Pedido</p>
-                <p className="text-lg font-bold text-blue-700">{primeiraTransacao.numeroPedido}</p>
-              </div>
-            </div>
-          </div>
-        )}
-
+        {/* Observações */}
         {primeiraTransacao.observacoes && (
           <div className="mt-6 p-4 bg-gray-50 rounded-lg">
             <div className="flex items-start space-x-2">
