@@ -153,29 +153,28 @@ export const VendaDetalhes: React.FC<VendaDetalhesProps> = ({
         </div>
       </div>
 
-        {/* Observações */}
-        {primeiraTransacao.observacoes && (
-          <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-            <div className="flex items-start space-x-2">
-              <FileText className="h-5 w-5 text-gray-500 mt-0.5" />
-              <div>
-                <p className="text-sm font-medium text-gray-700">Observações</p>
-                <p className="text-sm text-gray-600 mt-1">{primeiraTransacao.observacoes}</p>
-              </div>
+      {/* Observações */}
+      {primeiraTransacao.observacoes && (
+        <div className="bg-white p-4 rounded-lg shadow-sm border">
+          <div className="flex items-start space-x-2">
+            <FileText className="h-5 w-5 text-gray-500 mt-0.5" />
+            <div>
+              <p className="text-sm font-medium text-gray-700">Observações</p>
+              <p className="text-sm text-gray-600 mt-1">{primeiraTransacao.observacoes}</p>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Anexos PDF */}
       {primeiraTransacao.anexos && primeiraTransacao.anexos.length > 0 && (
         <div className="bg-white p-6 rounded-lg shadow-sm border">
           <h2 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
             <FileText className="h-5 w-5 mr-2" />
-            Anexos PDF ({primeiraTransacao.anexos.length})
+            Anexos PDF ({primeiraTransacao.anexos?.length || 0})
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {primeiraTransacao.anexos.map((anexo) => {
+            {primeiraTransacao.anexos?.map((anexo) => {
               const formatarTamanho = (bytes: number) => {
                 if (bytes === 0) return '0 Bytes';
                 const k = 1024;
@@ -410,19 +409,19 @@ export const VendaDetalhes: React.FC<VendaDetalhesProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <p className="text-sm font-medium text-gray-500">Nome Completo</p>
-              <p className="text-sm text-gray-900">{cliente.nome}</p>
+              <p className="text-sm text-gray-900">{cliente?.nome || '-'}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-gray-500">Email</p>
-              <p className="text-sm text-gray-900">{cliente.email}</p>
+              <p className="text-sm text-gray-900">{cliente?.email || '-'}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-gray-500">Telefone</p>
-              <p className="text-sm text-gray-900">{cliente.telefone}</p>
+              <p className="text-sm text-gray-900">{cliente?.telefone || '-'}</p>
             </div>
             <div>
               <p className="text-sm font-medium text-gray-500">Endereço</p>
-              <p className="text-sm text-gray-900">{cliente.endereco}</p>
+              <p className="text-sm text-gray-900">{cliente?.endereco || '-'}</p>
             </div>
           </div>
           
@@ -431,7 +430,7 @@ export const VendaDetalhes: React.FC<VendaDetalhesProps> = ({
             <h4 className="text-md font-medium text-gray-900 mb-3">Histórico de Compras</h4>
             {(() => {
               const comprasCliente = transacoes.filter(t => 
-                t.clienteId === cliente.id && t.tipo === 'saida'
+                t.clienteId === cliente?.id && t.tipo === 'saida'
               );
               const totalGasto = comprasCliente.reduce((sum, t) => sum + t.valorTotal, 0);
               
