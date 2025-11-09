@@ -133,41 +133,22 @@ export const VendaDetalhes: React.FC<VendaDetalhesProps> = ({
           </div>
         </div>
 
-        {/* Número do Pedido e Anexos - Cards Destacados */}
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Número do Pedido */}
-          {primeiraTransacao.numeroPedido && (
-            <div className="bg-gradient-to-r from-blue-50 to-blue-100 border-2 border-blue-300 rounded-lg p-4">
-              <div className="flex items-center space-x-3">
+        {/* Número do Pedido - Centralizado */}
+        {primeiraTransacao.numeroPedido && (
+          <div className="mt-6 flex justify-center">
+            <div className="bg-gradient-to-r from-blue-50 to-blue-100 border-2 border-blue-300 rounded-lg p-5 min-w-[400px]">
+              <div className="flex items-center justify-center space-x-4">
                 <div className="p-3 bg-blue-500 rounded-lg">
-                  <FileText className="h-6 w-6 text-white" />
+                  <FileText className="h-7 w-7 text-white" />
                 </div>
-                <div>
+                <div className="text-center">
                   <p className="text-sm font-medium text-blue-700">Número do Pedido</p>
-                  <p className="text-2xl font-bold text-blue-900">{primeiraTransacao.numeroPedido}</p>
+                  <p className="text-3xl font-bold text-blue-900">{primeiraTransacao.numeroPedido}</p>
                 </div>
               </div>
             </div>
-          )}
-
-          {/* Anexos PDF */}
-          {primeiraTransacao.anexos && primeiraTransacao.anexos.length > 0 && (
-            <div className="bg-gradient-to-r from-purple-50 to-purple-100 border-2 border-purple-300 rounded-lg p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="p-3 bg-purple-500 rounded-lg">
-                    <FileText className="h-6 w-6 text-white" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-purple-700">Anexos PDF</p>
-                    <p className="text-2xl font-bold text-purple-900">{primeiraTransacao.anexos.length} arquivo(s)</p>
-                  </div>
-                </div>
-                <Download className="h-5 w-5 text-purple-600" />
-              </div>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Observações */}
         {primeiraTransacao.observacoes && (
