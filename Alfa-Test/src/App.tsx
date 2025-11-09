@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Layout } from './components/Layout';
+import { Login } from './components/Login';
 import { ProdutoForm } from './components/ProdutoForm';
 import { ClienteForm } from './components/ClienteForm';
 import { TransacaoForm } from './components/TransacaoForm';
@@ -14,12 +15,35 @@ import { VendaForm } from './components/VendaForm';
 import { VendaDetalhes } from './components/VendaDetalhes';
 import { Configuracoes } from './components/Configuracoes';
 import { Home } from './components/Home';
-import { Plus, Edit, Trash2, TrendingUp, TrendingDown, DollarSign, Package, Users, Eye, Undo2, BarChart3, ShoppingCart, ChevronDown, ChevronRight, FileText } from 'lucide-react';
+import { GerenciarUsuarios } from './components/GerenciarUsuarios';
+import { hasPermission } from './utils/permissions';
+import { Plus, Edit, Trash2, TrendingUp, TrendingDown, DollarSign, Package, Users, Eye, Undo2, BarChart3, ShoppingCart, ChevronDown, ChevronRight, FileText, Search } from 'lucide-react';
 
 function App() {
   console.log('App component loading...');
   
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [activeTab, setActiveTab] = useState('home');
+
+  // Verificar se já está autenticado
+  useEffect(() => {
+    const auth = localStorage.getItem('nexus_auth');
+    if (auth === 'true') {
+      setIsAuthenticated(true);
+    }
+  }, []);
+
+  const handleLogin = () => {
+    setIsAuthenticated(true);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('nexus_auth');
+    localStorage.removeItem('nexus_user');
+    setIsAuthenticated(false);
+  };
+
+  // Todos os hooks devem vir ANTES de qualquer return condicional
   const [produtos, setProdutos] = useLocalStorage<Produto[]>('produtos', [
     {
       id: 'prod-1',
@@ -95,6 +119,10 @@ function App() {
   const [selectedProduto, setSelectedProduto] = useState<Produto | null>(null);
   const [selectedVendaId, setSelectedVendaId] = useState<string | null>(null);
   const [vendasExpandidas, setVendasExpandidas] = useState<Set<string>>(new Set());
+  const [buscaProduto, setBuscaProduto] = useState('');
+  const [buscaCliente, setBuscaCliente] = useState('');
+  const [buscaCategoria, setBuscaCategoria] = useState('');
+  const [buscaVenda, setBuscaVenda] = useState('');
 
   const chatBot = new ChatBotService(produtos, clientes, transacoes);
 
@@ -519,20 +547,72 @@ function App() {
       </div>
     );
   };  const 
-renderProdutos = () => (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Produtos</h1>
-        <button
-          onClick={() => setShowProdutoForm(true)}
-          className="bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700 flex items-center space-x-2"
-        >
-          <Plus className="h-4 w-4" />
-          <span>Novo Produto</span>
-        </button>
-      </div>
+renderProdutos = () => {
+    const produtosFiltrados = produtos.filter(produto => {
+      const busca = buscaProduto.toLowerCase();
+      const categoria = categorias.find(c => c.id === produto.categoriaId);
+      return (
+        produto.nome.toLowerCase().includes(busca) ||
+        produto.descricao?.toLowerCase().includes(busca) ||
+        categoria?.nome.toLowerCase().includes(busca)
+      );
+    });
 
-      <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+    // Calcular valor total do estoque
+    const valorTotalEstoque = produtos.reduce((total, produto) => {
+      return total + (produto.valor * produto.quantidade);
+    }, 0);
+
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-gray-900">Produtos</h1>
+          {hasPermission('canAddProduto') && (
+            <button
+              onClick={() => setShowProdutoForm(true)}
+              className="bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700 flex items-center space-x-2"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Novo Produto</span>
+            </button>
+          )}
+        </div>
+
+        {/* Card Valor Total do Estoque */}
+        <div className="bg-gradient-to-r from-green-500 to-green-600 p-6 rounded-lg shadow-lg text-white">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="p-3 bg-white/20 rounded-lg">
+                <DollarSign className="h-8 w-8 text-white" />
+              </div>
+              <div>
+                <p className="text-sm font-medium opacity-90">Valor Total do Estoque</p>
+                <p className="text-3xl font-bold">R$ {valorTotalEstoque.toFixed(2)}</p>
+                <p className="text-sm opacity-80 mt-1">{produtos.length} produtos cadastrados</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-sm opacity-90">Produtos em Estoque</p>
+              <p className="text-2xl font-bold">{produtos.filter(p => p.quantidade > 0).length}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Campo de Busca */}
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search className="h-5 w-5 text-gray-400" />
+          </div>
+          <input
+            type="text"
+            placeholder="Buscar por nome, descrição ou categoria..."
+            value={buscaProduto}
+            onChange={(e) => setBuscaProduto(e.target.value)}
+            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+          />
+        </div>
+
+        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
@@ -543,10 +623,13 @@ renderProdutos = () => (
                 Categoria
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Valor
+                Valor Unitário
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Quantidade
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Valor Total
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Ações
@@ -554,69 +637,89 @@ renderProdutos = () => (
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {produtos.map((produto) => (
-              <tr key={produto.id}>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div>
-                    <div className="text-sm font-medium text-gray-900">{produto.nome}</div>
-                    {produto.descricao && (
-                      <div className="text-sm text-gray-500">{produto.descricao}</div>
+            {produtosFiltrados.map((produto) => {
+              const valorTotalProduto = produto.valor * produto.quantidade;
+              
+              return (
+                <tr key={produto.id}>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div>
+                      <div className="text-sm font-medium text-gray-900">{produto.nome}</div>
+                      {produto.descricao && (
+                        <div className="text-sm text-gray-500">{produto.descricao}</div>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {(() => {
+                      const categoria = categorias.find(c => c.id === produto.categoriaId);
+                      return categoria ? (
+                        <div className="flex items-center">
+                          <div
+                            className="w-3 h-3 rounded-full mr-2"
+                            style={{ backgroundColor: categoria.cor }}
+                          />
+                          {categoria.nome}
+                        </div>
+                      ) : 'Sem categoria';
+                    })()}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    R$ {produto.valor.toFixed(2)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                      produto.quantidade === 0
+                        ? 'bg-red-100 text-red-800'
+                        : produto.quantidade <= 5
+                        ? 'bg-yellow-100 text-yellow-800'
+                        : 'bg-green-100 text-green-800'
+                    }`}>
+                      {produto.quantidade} unidades
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+                    R$ {valorTotalProduto.toFixed(2)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <button 
+                      onClick={() => handleViewProdutoPanel(produto)}
+                      className="text-blue-600 hover:text-blue-900 mr-3"
+                      title="Ver painel do produto"
+                    >
+                      <BarChart3 className="h-4 w-4" />
+                    </button>
+                    {hasPermission('canEditProduto') && (
+                      <button 
+                        onClick={() => handleEditProduto(produto)}
+                        className="text-indigo-600 hover:text-indigo-900 mr-3"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </button>
                     )}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {(() => {
-                    const categoria = categorias.find(c => c.id === produto.categoriaId);
-                    return categoria ? (
-                      <div className="flex items-center">
-                        <div
-                          className="w-3 h-3 rounded-full mr-2"
-                          style={{ backgroundColor: categoria.cor }}
-                        />
-                        {categoria.nome}
-                      </div>
-                    ) : 'Sem categoria';
-                  })()}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  R$ {produto.valor.toFixed(2)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                    produto.quantidade === 0
-                      ? 'bg-red-100 text-red-800'
-                      : produto.quantidade <= 5
-                      ? 'bg-yellow-100 text-yellow-800'
-                      : 'bg-green-100 text-green-800'
-                  }`}>
-                    {produto.quantidade} unidades
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button 
-                    onClick={() => handleViewProdutoPanel(produto)}
-                    className="text-blue-600 hover:text-blue-900 mr-3"
-                    title="Ver painel do produto"
-                  >
-                    <BarChart3 className="h-4 w-4" />
-                  </button>
-                  <button 
-                    onClick={() => handleEditProduto(produto)}
-                    className="text-indigo-600 hover:text-indigo-900 mr-3"
-                  >
-                    <Edit className="h-4 w-4" />
-                  </button>
-                  <button 
-                    onClick={() => handleDeleteProduto(produto.id)}
-                    className="text-red-600 hover:text-red-900"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </td>
-              </tr>
-            ))}
+                    {hasPermission('canDeleteProduto') && (
+                      <button 
+                        onClick={() => handleDeleteProduto(produto.id)}
+                        className="text-red-600 hover:text-red-900"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
+        {produtosFiltrados.length === 0 && produtos.length > 0 && (
+          <div className="text-center py-12">
+            <Search className="mx-auto h-12 w-12 text-gray-400" />
+            <h3 className="mt-2 text-sm font-medium text-gray-900">Nenhum produto encontrado</h3>
+            <p className="mt-1 text-sm text-gray-500">
+              Tente buscar com outros termos.
+            </p>
+          </div>
+        )}
         {produtos.length === 0 && (
           <div className="text-center py-12">
             <Package className="mx-auto h-12 w-12 text-gray-400" />
@@ -628,22 +731,48 @@ renderProdutos = () => (
         )}
       </div>
     </div>
-  );
+    );
+  };
 
-  const renderCategorias = () => (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Categorias</h1>
-        <button
-          onClick={() => setShowCategoriaForm(true)}
-          className="bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700 flex items-center space-x-2"
-        >
-          <Plus className="h-4 w-4" />
-          <span>Nova Categoria</span>
-        </button>
-      </div>
+  const renderCategorias = () => {
+    const categoriasFiltradas = categorias.filter(categoria => {
+      const busca = buscaCategoria.toLowerCase();
+      return (
+        categoria.nome.toLowerCase().includes(busca) ||
+        categoria.descricao?.toLowerCase().includes(busca)
+      );
+    });
 
-      <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-gray-900">Categorias</h1>
+          {hasPermission('canAddCategoria') && (
+            <button
+              onClick={() => setShowCategoriaForm(true)}
+              className="bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700 flex items-center space-x-2"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Nova Categoria</span>
+            </button>
+          )}
+        </div>
+
+        {/* Campo de Busca */}
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search className="h-5 w-5 text-gray-400" />
+          </div>
+          <input
+            type="text"
+            placeholder="Buscar por nome ou descrição..."
+            value={buscaCategoria}
+            onChange={(e) => setBuscaCategoria(e.target.value)}
+            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+          />
+        </div>
+
+        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
@@ -665,7 +794,7 @@ renderProdutos = () => (
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {categorias.map((categoria) => {
+            {categoriasFiltradas.map((categoria) => {
               const produtosDaCategoria = produtos.filter(p => p.categoriaId === categoria.id);
               
               return (
@@ -699,24 +828,37 @@ renderProdutos = () => (
                     {categoria.descricao || '-'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button 
-                      onClick={() => handleEditCategoria(categoria)}
-                      className="text-indigo-600 hover:text-indigo-900 mr-3"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </button>
-                    <button 
-                      onClick={() => handleDeleteCategoria(categoria.id)}
-                      className="text-red-600 hover:text-red-900"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                    {hasPermission('canEditCategoria') && (
+                      <button 
+                        onClick={() => handleEditCategoria(categoria)}
+                        className="text-indigo-600 hover:text-indigo-900 mr-3"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </button>
+                    )}
+                    {hasPermission('canDeleteCategoria') && (
+                      <button 
+                        onClick={() => handleDeleteCategoria(categoria.id)}
+                        className="text-red-600 hover:text-red-900"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    )}
                   </td>
                 </tr>
               );
             })}
           </tbody>
         </table>
+        {categoriasFiltradas.length === 0 && categorias.length > 0 && (
+          <div className="text-center py-12">
+            <Search className="mx-auto h-12 w-12 text-gray-400" />
+            <h3 className="mt-2 text-sm font-medium text-gray-900">Nenhuma categoria encontrada</h3>
+            <p className="mt-1 text-sm text-gray-500">
+              Tente buscar com outros termos.
+            </p>
+          </div>
+        )}
         {categorias.length === 0 && (
           <div className="text-center py-12">
             <Package className="mx-auto h-12 w-12 text-gray-400" />
@@ -728,22 +870,50 @@ renderProdutos = () => (
         )}
       </div>
     </div>
-  );
+    );
+  };
 
-  const renderClientes = () => (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Clientes</h1>
-        <button
-          onClick={() => setShowClienteForm(true)}
-          className="bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700 flex items-center space-x-2"
-        >
-          <Plus className="h-4 w-4" />
-          <span>Novo Cliente</span>
-        </button>
-      </div>
+  const renderClientes = () => {
+    const clientesFiltrados = clientes.filter(cliente => {
+      const busca = buscaCliente.toLowerCase();
+      return (
+        cliente.nome.toLowerCase().includes(busca) ||
+        cliente.email?.toLowerCase().includes(busca) ||
+        cliente.telefone?.toLowerCase().includes(busca) ||
+        cliente.endereco?.toLowerCase().includes(busca)
+      );
+    });
 
-      <div className="bg-white shadow-sm rounded-lg overflow-hidden">
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-gray-900">Clientes</h1>
+          {hasPermission('canAddCliente') && (
+            <button
+              onClick={() => setShowClienteForm(true)}
+              className="bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700 flex items-center space-x-2"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Novo Cliente</span>
+            </button>
+          )}
+        </div>
+
+        {/* Campo de Busca */}
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search className="h-5 w-5 text-gray-400" />
+          </div>
+          <input
+            type="text"
+            placeholder="Buscar por nome, email, telefone ou endereço..."
+            value={buscaCliente}
+            onChange={(e) => setBuscaCliente(e.target.value)}
+            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+          />
+        </div>
+
+        <div className="bg-white shadow-sm rounded-lg overflow-hidden">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
@@ -765,7 +935,7 @@ renderProdutos = () => (
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {clientes.map((cliente) => {
+            {clientesFiltrados.map((cliente) => {
               const totalGasto = transacoes
                 .filter(t => t.clienteId === cliente.id && t.tipo === 'saida')
                 .reduce((sum, t) => sum + t.valorTotal, 0);
@@ -792,24 +962,37 @@ renderProdutos = () => (
                     >
                       <Eye className="h-4 w-4" />
                     </button>
-                    <button 
-                      onClick={() => handleEditCliente(cliente)}
-                      className="text-indigo-600 hover:text-indigo-900 mr-3"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </button>
-                    <button 
-                      onClick={() => handleDeleteCliente(cliente.id)}
-                      className="text-red-600 hover:text-red-900"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                    {hasPermission('canEditCliente') && (
+                      <button 
+                        onClick={() => handleEditCliente(cliente)}
+                        className="text-indigo-600 hover:text-indigo-900 mr-3"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </button>
+                    )}
+                    {hasPermission('canDeleteCliente') && (
+                      <button 
+                        onClick={() => handleDeleteCliente(cliente.id)}
+                        className="text-red-600 hover:text-red-900"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    )}
                   </td>
                 </tr>
               );
             })}
           </tbody>
         </table>
+        {clientesFiltrados.length === 0 && clientes.length > 0 && (
+          <div className="text-center py-12">
+            <Search className="mx-auto h-12 w-12 text-gray-400" />
+            <h3 className="mt-2 text-sm font-medium text-gray-900">Nenhum cliente encontrado</h3>
+            <p className="mt-1 text-sm text-gray-500">
+              Tente buscar com outros termos.
+            </p>
+          </div>
+        )}
         {clientes.length === 0 && (
           <div className="text-center py-12">
             <Users className="mx-auto h-12 w-12 text-gray-400" />
@@ -821,20 +1004,36 @@ renderProdutos = () => (
         )}
       </div>
     </div>
-  );
+    );
+  };
 
-  const renderVendas = () => (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Sistema de Vendas</h1>
-        <button
-          onClick={() => setShowVendaForm(true)}
-          className="bg-green-600 text-white px-6 py-3 rounded-md hover:bg-green-700 flex items-center space-x-2 text-lg font-medium"
-        >
-          <ShoppingCart className="h-5 w-5" />
-          <span>Nova Venda</span>
-        </button>
-      </div>
+  const renderVendas = () => {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-gray-900">Sistema de Vendas</h1>
+          <button
+            onClick={() => setShowVendaForm(true)}
+            className="bg-green-600 text-white px-6 py-3 rounded-md hover:bg-green-700 flex items-center space-x-2 text-lg font-medium"
+          >
+            <ShoppingCart className="h-5 w-5" />
+            <span>Nova Venda</span>
+          </button>
+        </div>
+
+        {/* Campo de Busca */}
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search className="h-5 w-5 text-gray-400" />
+          </div>
+          <input
+            type="text"
+            placeholder="Buscar por número do pedido, cliente ou produto..."
+            value={buscaVenda}
+            onChange={(e) => setBuscaVenda(e.target.value)}
+            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
+          />
+        </div>
 
       {/* Cards de Resumo */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -915,7 +1114,20 @@ renderProdutos = () => (
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {transacoes
-                .filter(t => t.tipo === 'saida')
+                .filter(t => {
+                  if (t.tipo !== 'saida') return false;
+                  if (!buscaVenda) return true;
+                  
+                  const busca = buscaVenda.toLowerCase();
+                  const cliente = clientes.find(c => c.id === t.clienteId);
+                  const produto = produtos.find(p => p.id === t.produtoId);
+                  
+                  return (
+                    t.numeroPedido?.toLowerCase().includes(busca) ||
+                    cliente?.nome.toLowerCase().includes(busca) ||
+                    produto?.nome.toLowerCase().includes(busca)
+                  );
+                })
                 .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
                 .slice(0, 10)
                 .reduce((vendas, transacao) => {
@@ -1053,19 +1265,22 @@ renderProdutos = () => (
         </div>
       </div>
     </div>
-  );
+    );
+  };
 
   const renderTransacoes = () => (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900">Transações</h1>
-        <button
-          onClick={() => setShowTransacaoForm(true)}
-          className="bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700 flex items-center space-x-2"
-        >
-          <Plus className="h-4 w-4" />
-          <span>Nova Transação</span>
-        </button>
+        {hasPermission('canAddTransacao') && (
+          <button
+            onClick={() => setShowTransacaoForm(true)}
+            className="bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700 flex items-center space-x-2"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Nova Transação</span>
+          </button>
+        )}
       </div>
 
       <div className="bg-white shadow-sm rounded-lg overflow-hidden">
@@ -1146,13 +1361,17 @@ renderProdutos = () => (
                       R$ {transacao.valorTotal.toFixed(2)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <button 
-                        onClick={() => handleUndoTransacao(transacao)}
-                        className="text-yellow-600 hover:text-yellow-900"
-                        title="Desfazer transação"
-                      >
-                        <Undo2 className="h-4 w-4" />
-                      </button>
+                      {hasPermission('canUndoTransacao') ? (
+                        <button 
+                          onClick={() => handleUndoTransacao(transacao)}
+                          className="text-yellow-600 hover:text-yellow-900"
+                          title="Desfazer transação"
+                        >
+                          <Undo2 className="h-4 w-4" />
+                        </button>
+                      ) : (
+                        <span className="text-gray-400">-</span>
+                      )}
                     </td>
                   </tr>
                 );
@@ -1180,19 +1399,57 @@ renderProdutos = () => (
     </div>
   );
 
-  const renderConfiguracoes = () => (
-    <Configuracoes
-      onLimparDados={handleLimparDados}
-      onExportarDados={handleExportarDados}
-      onImportarDados={handleImportarDados}
-      estatisticas={{
-        produtos: produtos.length,
-        clientes: clientes.length,
-        transacoes: transacoes.length,
-        categorias: categorias.length
-      }}
-    />
-  );
+  const renderConfiguracoes = () => {
+    const userRole = localStorage.getItem('nexus_role');
+    // Apenas admin e gerente podem acessar configurações
+    if (userRole !== 'admin' && userRole !== 'gerente') {
+      return (
+        <div className="min-h-[400px] flex items-center justify-center">
+          <div className="max-w-md w-full bg-white rounded-lg shadow-lg border-2 border-red-200 p-8 text-center">
+            <div className="mb-6">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-red-100 rounded-full mb-4">
+                <svg className="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              </div>
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                Acesso Negado
+              </h2>
+            </div>
+            <div className="space-y-4 text-gray-600">
+              <p className="text-sm">
+                Você não tem permissão para acessar as configurações do sistema.
+              </p>
+              <div className="text-sm space-y-2">
+                <p>
+                  <span className="font-medium">Nível necessário:</span> Administrador ou Gerente
+                </p>
+              </div>
+              <div className="pt-4 border-t border-gray-200">
+                <p className="text-xs text-gray-500">
+                  Entre em contato com o administrador do sistema para solicitar acesso.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <Configuracoes
+        onLimparDados={handleLimparDados}
+        onExportarDados={handleExportarDados}
+        onImportarDados={handleImportarDados}
+        estatisticas={{
+          produtos: produtos.length,
+          clientes: clientes.length,
+          transacoes: transacoes.length,
+          categorias: categorias.length
+        }}
+      />
+    );
+  };
 
   const renderHome = () => (
     <Home
@@ -1272,6 +1529,14 @@ renderProdutos = () => (
         return renderTransacoes();
       case 'configuracoes':
         return renderConfiguracoes();
+      case 'gerenciar-usuarios':
+        // Só admin pode acessar
+        const userRole = localStorage.getItem('nexus_role');
+        if (userRole === 'admin') {
+          return <GerenciarUsuarios />;
+        } else {
+          return renderHome();
+        }
       case 'cliente-panel':
         return renderClientePanel();
       case 'produto-panel':
@@ -1283,9 +1548,14 @@ renderProdutos = () => (
     }
   };
 
+  // Se não estiver autenticado, mostrar tela de login
+  if (!isAuthenticated) {
+    return <Login onLogin={handleLogin} />;
+  }
+
   return (
     <div className="App">
-      <Layout activeTab={activeTab} onTabChange={setActiveTab}>
+      <Layout activeTab={activeTab} onTabChange={setActiveTab} onLogout={handleLogout}>
         {renderContent()}
       </Layout>
 

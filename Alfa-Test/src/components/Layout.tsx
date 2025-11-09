@@ -1,16 +1,19 @@
 import React from 'react';
-import { Package, Users, History, Tag, ShoppingCart, Settings, Home, Menu, X } from 'lucide-react';
+import { Package, Users, History, Tag, ShoppingCart, Settings, Home, Menu, X, LogOut, User as UserIcon, Shield } from 'lucide-react';
 
 interface LayoutProps {
   children: React.ReactNode;
   activeTab: string;
   onTabChange: (tab: string) => void;
+  onLogout?: () => void;
 }
 
-export const Layout: React.FC<LayoutProps> = ({ children, activeTab, onTabChange }) => {
+export const Layout: React.FC<LayoutProps> = ({ children, activeTab, onTabChange, onLogout }) => {
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
+  const username = localStorage.getItem('nexus_user') || 'Usuário';
+  const userRole = localStorage.getItem('nexus_role') || 'usuario';
 
-  const tabs = [
+  const baseTabs = [
     { id: 'home', label: 'Home', icon: Home, color: 'from-blue-500 to-blue-600' },
     { id: 'produtos', label: 'Produtos', icon: Package, color: 'from-green-500 to-green-600' },
     { id: 'categorias', label: 'Categorias', icon: Tag, color: 'from-purple-500 to-purple-600' },
@@ -19,6 +22,11 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, onTabChange
     { id: 'transacoes', label: 'Histórico', icon: History, color: 'from-indigo-500 to-indigo-600' },
     { id: 'configuracoes', label: 'Configurações', icon: Settings, color: 'from-gray-500 to-gray-600' },
   ];
+
+  // Adicionar aba secreta só para admin
+  const tabs = userRole === 'admin' 
+    ? [...baseTabs, { id: 'gerenciar-usuarios', label: '🔐 Admin', icon: Shield, color: 'from-red-600 to-pink-600' }]
+    : baseTabs;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-pink-50/30 relative overflow-hidden">
@@ -42,19 +50,38 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeTab, onTabChange
                     NEXUS
                   </span>
                   <div className="text-sm text-gray-300 font-medium">
-                    Sistema de Gestão IA
+                    Gestão de Estoque IA
                   </div>
                 </div>
               </div>
             </div>
             
-            {/* Mobile menu button */}
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="md:hidden p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
-            >
-              {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </button>
+            {/* User info and logout */}
+            <div className="flex items-center space-x-4">
+              <div className="hidden md:flex items-center space-x-3 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-lg">
+                <UserIcon className="h-5 w-5 text-cyan-400" />
+                <span className="text-white font-medium capitalize">{username}</span>
+              </div>
+              
+              {onLogout && (
+                <button
+                  onClick={onLogout}
+                  className="hidden md:flex items-center space-x-2 bg-red-500/20 hover:bg-red-500/30 text-red-300 hover:text-red-200 px-4 py-2 rounded-lg transition-all"
+                  title="Sair"
+                >
+                  <LogOut className="h-5 w-5" />
+                  <span className="font-medium">Sair</span>
+                </button>
+              )}
+
+              {/* Mobile menu button */}
+              <button
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="md:hidden p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
+              >
+                {sidebarOpen ? <X className="h-5 w-5 text-white" /> : <Menu className="h-5 w-5 text-white" />}
+              </button>
+            </div>
           </div>
         </div>
       </header>
