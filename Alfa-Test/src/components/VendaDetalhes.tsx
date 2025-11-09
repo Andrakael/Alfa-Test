@@ -1,6 +1,6 @@
 import React from 'react';
-import { ArrowLeft, User, Calendar, Package, DollarSign, FileText, ShoppingCart, Tag } from 'lucide-react';
-import { Produto, Cliente, Transacao, Categoria } from '../types';
+import { ArrowLeft, User, Calendar, Package, DollarSign, FileText, ShoppingCart, Tag, Download } from 'lucide-react';
+import { Produto, Cliente, Transacao, Categoria, AnexoPDF } from '../types';
 
 interface VendaDetalhesProps {
   vendaId: string;
@@ -129,6 +129,21 @@ export const VendaDetalhes: React.FC<VendaDetalhesProps> = ({
           </div>
         </div>
 
+        {/* Número do Pedido */}
+        {primeiraTransacao.numeroPedido && (
+          <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <div className="flex items-center space-x-2">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <FileText className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-blue-900">Número do Pedido</p>
+                <p className="text-lg font-bold text-blue-700">{primeiraTransacao.numeroPedido}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {primeiraTransacao.observacoes && (
           <div className="mt-6 p-4 bg-gray-50 rounded-lg">
             <div className="flex items-start space-x-2">
@@ -141,6 +156,116 @@ export const VendaDetalhes: React.FC<VendaDetalhesProps> = ({
           </div>
         )}
       </div>
+
+      {/* Anexos PDF */}
+      {primeiraTransacao.anexos && primeiraTransacao.anexos.length > 0 && (
+        <div className="bg-white p-6 rounded-lg shadow-sm border">
+          <h2 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
+            <FileText className="h-5 w-5 mr-2" />
+            Anexos PDF ({primeiraTransacao.anexos.length})
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {primeiraTransacao.anexos.map((anexo) => {
+              const formatarTamanho = (bytes: number) => {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+              };
+
+              const downloadAnexo = () => {
+                const link = document.createElement('a');
+                link.href = anexo.arquivo;
+                link.download = anexo.nome;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+              };
+
+              const getTipoLabel = (tipo: string) => {
+                switch (tipo) {
+                  case 'orcamento_fornecedor': return 'Orçamento Fornecedor';
+                  case 'documento_empresa': return 'Documento Empresa';
+                  default: return 'Outros Documentos';
+                }
+              };
+
+              const getTipoCor = (tipo: string) => {
+                switch (tipo) {
+                  case 'orcamento_fornecedor': return 'purple';
+                  case 'documento_empresa': return 'blue';
+                  default: return 'green';
+                }
+              };
+
+              const estilos = {
+                orcamento_fornecedor: {
+                  border: 'border-purple-200',
+                  bg: 'bg-purple-50',
+                  iconBg: 'bg-purple-100',
+                  icon: 'text-purple-600',
+                  text: 'text-purple-900',
+                  subtext: 'text-purple-700',
+                  size: 'text-purple-600',
+                  download: 'text-purple-500'
+                },
+                documento_empresa: {
+                  border: 'border-blue-200',
+                  bg: 'bg-blue-50',
+                  iconBg: 'bg-blue-100',
+                  icon: 'text-blue-600',
+                  text: 'text-blue-900',
+                  subtext: 'text-blue-700',
+                  size: 'text-blue-600',
+                  download: 'text-blue-500'
+                },
+                outros: {
+                  border: 'border-green-200',
+                  bg: 'bg-green-50',
+                  iconBg: 'bg-green-100',
+                  icon: 'text-green-600',
+                  text: 'text-green-900',
+                  subtext: 'text-green-700',
+                  size: 'text-green-600',
+                  download: 'text-green-500'
+                }
+              };
+
+              const estilo = estilos[anexo.tipo as keyof typeof estilos] || estilos.outros;
+
+              return (
+                <div
+                  key={anexo.id}
+                  className={`border-2 ${estilo.border} ${estilo.bg} rounded-lg p-4 hover:shadow-lg transition-all cursor-pointer group`}
+                  onClick={downloadAnexo}
+                >
+                  <div className="flex items-start space-x-3">
+                    <div className={`p-3 ${estilo.iconBg} rounded-lg group-hover:scale-110 transition-transform`}>
+                      <FileText className={`h-6 w-6 ${estilo.icon}`} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-sm font-medium ${estilo.text} truncate`}>
+                        {anexo.nome}
+                      </p>
+                      <p className={`text-xs ${estilo.subtext} mt-1 font-medium`}>
+                        {getTipoLabel(anexo.tipo)}
+                      </p>
+                      <p className={`text-xs ${estilo.size} mt-1`}>
+                        {formatarTamanho(anexo.tamanho)}
+                      </p>
+                      <div className={`flex items-center space-x-1 text-xs ${estilo.download} mt-2 font-medium`}>
+                        <Download className="h-3 w-3" />
+                        <span>Clique para baixar</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Produtos Vendidos */}
       <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
