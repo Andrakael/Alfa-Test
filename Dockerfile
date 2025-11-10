@@ -2,12 +2,11 @@ FROM python:3.10-slim
 
 WORKDIR /app
 
-# Copiar requirements e instalar dependências
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copiar código do backend
+# Copiar código do backend primeiro
 COPY backend ./backend
+
+# Instalar dependências
+RUN pip install --no-cache-dir -r backend/requirements.txt
 
 # Expor porta
 EXPOSE 8000
