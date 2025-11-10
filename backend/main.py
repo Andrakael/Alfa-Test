@@ -74,6 +74,37 @@ def read_users_me(current_user: models.User = Depends(auth.get_current_user)):
     """Obter usuário atual"""
     return current_user
 
+@app.get("/api/users", response_model=List[schemas.User])
+def get_users(
+    current_user: models.User = Depends(auth.get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Listar todos os usuários (apenas admin)"""
+    auth.check_permission(current_user, "admin")
+    return db.query(models.User).all()
+
+@app.delete("/api/users/{user_id}")
+def delete_user(
+    user_id: int,
+    current_user: models.User = Depends(auth.get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Deletar usuário (apenas admin)"""
+    auth.check_permission(current_user, "admin")
+    
+    # Não permitir deletar a si mesmo
+    if user_id == current_user.id:
+        raise HTTPException(status_code=400, detail="Não é possível deletar seu próprio usuário")
+    
+    db_user = db.query(models.User).filter(models.User.id == user_id).first()
+    
+    if not db_user:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+    
+    db.delete(db_user)
+    db.commit()
+    return {"message": "Usuário deletado com sucesso"}
+
 # ==================== CATEGORIAS ====================
 
 @app.get("/api/categorias", response_model=List[schemas.Categoria])
