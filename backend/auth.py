@@ -5,9 +5,8 @@ import bcrypt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
-import models
-import schemas
-from database import get_db
+from backend import models, schemas
+from backend.database import get_db
 
 # Configurações
 SECRET_KEY = "sua-chave-secreta-super-segura-mude-em-producao"
