@@ -28,7 +28,7 @@ export const authAPI = {
       paramsString: params.toString()
     });
     
-    const response = await apiClient.post('/login', params, {
+    const response = await apiClient.post('/token', params, {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
