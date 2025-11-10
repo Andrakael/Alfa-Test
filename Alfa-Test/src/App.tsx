@@ -7,7 +7,7 @@ import { TransacaoForm } from './components/TransacaoForm';
 import { ChatBot } from './components/ChatBot';
 import { ClientePanel } from './components/ClientePanel';
 import { ProdutoPanel } from './components/ProdutoPanel';
-import { useAPI } from './hooks/useAPI';
+import { useLocalStorage } from './hooks/useLocalStorage';
 import { Produto, Cliente, Transacao, Categoria, AnexoPDF } from './types';
 import { ChatBot as ChatBotService } from './services/chatBot';
 import { CategoriaForm } from './components/CategoriaForm';
@@ -45,26 +45,29 @@ function App() {
     setIsAuthenticated(false);
   };
 
-  // Usar hook da API para gerenciar dados
-  const {
-    produtos,
-    clientes,
-    transacoes,
-    categorias,
-    loading,
-    error,
-    addProduto,
-    updateProduto,
-    deleteProduto,
-    addCliente,
-    updateCliente,
-    deleteCliente,
-    addCategoria,
-    updateCategoria,
-    deleteCategoria,
-    addTransacao,
-    deleteTransacao,
-  } = useAPI();
+  // MODO TEMPORÁRIO: Voltar para localStorage
+  const [produtos, setProdutos] = useLocalStorage<Produto[]>('produtos', []);
+  const [clientes, setClientes] = useLocalStorage<Cliente[]>('clientes', []);
+  const [transacoes, setTransacoes] = useLocalStorage<Transacao[]>('transacoes', []);
+  const [categorias, setCategorias] = useLocalStorage<Categoria[]>('categorias', [
+    {
+      id: '1',
+      nome: 'Eletrônicos',
+      descricao: 'Produtos eletrônicos em geral',
+      cor: '#3B82F6',
+      createdAt: new Date()
+    },
+    {
+      id: '2',
+      nome: 'Placas Solares',
+      descricao: 'Equipamentos de energia solar',
+      cor: '#F59E0B',
+      createdAt: new Date()
+    }
+  ]);
+  
+  const loading = false;
+  const error = null;
   
   const [showProdutoForm, setShowProdutoForm] = useState(false);
   const [showClienteForm, setShowClienteForm] = useState(false);
@@ -85,21 +88,26 @@ function App() {
 
   const chatBot = new ChatBotService(produtos, clientes, transacoes);
 
-  const handleAddProduto = async (produtoData: Omit<Produto, 'id' | 'createdAt'>) => {
-    try {
-      if (editingProduto) {
-        // Editando produto existente
-        await updateProduto(editingProduto.id, produtoData);
-        setEditingProduto(null);
-      } else {
-        // Adicionando novo produto
-        await addProduto(produtoData);
-      }
-      setShowProdutoForm(false);
-    } catch (error) {
-      console.error('Erro ao salvar produto:', error);
-      alert('Erro ao salvar produto. Tente novamente.');
+  const handleAddProduto = (produtoData: Omit<Produto, 'id' | 'createdAt'>) => {
+    if (editingProduto) {
+      // Editando produto existente
+      const produtosAtualizados = produtos.map(p => 
+        p.id === editingProduto.id 
+          ? { ...editingProduto, ...produtoData }
+          : p
+      );
+      setProdutos(produtosAtualizados);
+      setEditingProduto(null);
+    } else {
+      // Adicionando novo produto
+      const novoProduto: Produto = {
+        ...produtoData,
+        id: Date.now().toString(),
+        createdAt: new Date()
+      };
+      setProdutos([...produtos, novoProduto]);
     }
+    setShowProdutoForm(false);
   };
 
   const handleEditProduto = (produto: Produto) => {
@@ -107,32 +115,32 @@ function App() {
     setShowProdutoForm(true);
   };
 
-  const handleDeleteProduto = async (produtoId: string) => {
+  const handleDeleteProduto = (produtoId: string) => {
     if (window.confirm('Tem certeza que deseja excluir este produto?')) {
-      try {
-        await deleteProduto(produtoId);
-      } catch (error) {
-        console.error('Erro ao deletar produto:', error);
-        alert('Erro ao deletar produto. Tente novamente.');
-      }
+      setProdutos(produtos.filter(p => p.id !== produtoId));
     }
   };
 
-  const handleAddCliente = async (clienteData: Omit<Cliente, 'id' | 'createdAt'>) => {
-    try {
-      if (editingCliente) {
-        // Editando cliente existente
-        await updateCliente(editingCliente.id, clienteData);
-        setEditingCliente(null);
-      } else {
-        // Adicionando novo cliente
-        await addCliente(clienteData);
-      }
-      setShowClienteForm(false);
-    } catch (error) {
-      console.error('Erro ao salvar cliente:', error);
-      alert('Erro ao salvar cliente. Tente novamente.');
+  const handleAddCliente = (clienteData: Omit<Cliente, 'id' | 'createdAt'>) => {
+    if (editingCliente) {
+      // Editando cliente existente
+      const clientesAtualizados = clientes.map(c => 
+        c.id === editingCliente.id 
+          ? { ...editingCliente, ...clienteData }
+          : c
+      );
+      setClientes(clientesAtualizados);
+      setEditingCliente(null);
+    } else {
+      // Adicionando novo cliente
+      const novoCliente: Cliente = {
+        ...clienteData,
+        id: Date.now().toString(),
+        createdAt: new Date()
+      };
+      setClientes([...clientes, novoCliente]);
     }
+    setShowClienteForm(false);
   };
 
   const handleEditCliente = (cliente: Cliente) => {
@@ -140,32 +148,32 @@ function App() {
     setShowClienteForm(true);
   };
 
-  const handleDeleteCliente = async (clienteId: string) => {
+  const handleDeleteCliente = (clienteId: string) => {
     if (window.confirm('Tem certeza que deseja excluir este cliente?')) {
-      try {
-        await deleteCliente(clienteId);
-      } catch (error) {
-        console.error('Erro ao deletar cliente:', error);
-        alert('Erro ao deletar cliente. Tente novamente.');
-      }
+      setClientes(clientes.filter(c => c.id !== clienteId));
     }
   };
 
-  const handleAddCategoria = async (categoriaData: Omit<Categoria, 'id' | 'createdAt'>) => {
-    try {
-      if (editingCategoria) {
-        // Editando categoria existente
-        await updateCategoria(editingCategoria.id, categoriaData);
-        setEditingCategoria(null);
-      } else {
-        // Adicionando nova categoria
-        await addCategoria(categoriaData);
-      }
-      setShowCategoriaForm(false);
-    } catch (error) {
-      console.error('Erro ao salvar categoria:', error);
-      alert('Erro ao salvar categoria. Tente novamente.');
+  const handleAddCategoria = (categoriaData: Omit<Categoria, 'id' | 'createdAt'>) => {
+    if (editingCategoria) {
+      // Editando categoria existente
+      const categoriasAtualizadas = categorias.map(c => 
+        c.id === editingCategoria.id 
+          ? { ...editingCategoria, ...categoriaData }
+          : c
+      );
+      setCategorias(categoriasAtualizadas);
+      setEditingCategoria(null);
+    } else {
+      // Adicionando nova categoria
+      const novaCategoria: Categoria = {
+        ...categoriaData,
+        id: Date.now().toString(),
+        createdAt: new Date()
+      };
+      setCategorias([...categorias, novaCategoria]);
     }
+    setShowCategoriaForm(false);
   };
 
   const handleEditCategoria = (categoria: Categoria) => {
@@ -173,7 +181,7 @@ function App() {
     setShowCategoriaForm(true);
   };
 
-  const handleDeleteCategoria = async (categoriaId: string) => {
+  const handleDeleteCategoria = (categoriaId: string) => {
     const produtosComCategoria = produtos.filter(p => p.categoriaId === categoriaId);
     if (produtosComCategoria.length > 0) {
       alert(`Não é possível excluir esta categoria pois existem ${produtosComCategoria.length} produtos vinculados a ela.`);
@@ -181,37 +189,49 @@ function App() {
     }
     
     if (window.confirm('Tem certeza que deseja excluir esta categoria?')) {
-      try {
-        await deleteCategoria(categoriaId);
-      } catch (error) {
-        console.error('Erro ao deletar categoria:', error);
-        alert('Erro ao deletar categoria. Tente novamente.');
-      }
+      setCategorias(categorias.filter(c => c.id !== categoriaId));
     }
   };
 
-  const handleAddTransacao = async (transacaoData: Omit<Transacao, 'id' | 'createdAt'>) => {
-    try {
-      await addTransacao(transacaoData);
-      setShowTransacaoForm(false);
-    } catch (error: any) {
-      console.error('Erro ao adicionar transação:', error);
-      if (error.response?.data?.detail) {
-        alert(error.response.data.detail);
+  const handleAddTransacao = (transacaoData: Omit<Transacao, 'id' | 'createdAt'>) => {
+    const novaTransacao: Transacao = {
+      ...transacaoData,
+      id: Date.now().toString(),
+      createdAt: new Date()
+    };
+
+    // Atualizar estoque do produto
+    const produtoIndex = produtos.findIndex(p => p.id === transacaoData.produtoId);
+    if (produtoIndex !== -1) {
+      const novosProdutos = [...produtos];
+      if (transacaoData.tipo === 'entrada') {
+        novosProdutos[produtoIndex].quantidade += transacaoData.quantidade;
       } else {
-        alert('Erro ao adicionar transação. Tente novamente.');
+        novosProdutos[produtoIndex].quantidade -= transacaoData.quantidade;
       }
+      setProdutos(novosProdutos);
     }
+
+    setTransacoes([...transacoes, novaTransacao]);
+    setShowTransacaoForm(false);
   };
 
-  const handleUndoTransacao = async (transacao: Transacao) => {
+  const handleUndoTransacao = (transacao: Transacao) => {
     if (window.confirm('Tem certeza que deseja desfazer esta transação?')) {
-      try {
-        await deleteTransacao(transacao.id);
-      } catch (error) {
-        console.error('Erro ao desfazer transação:', error);
-        alert('Erro ao desfazer transação. Tente novamente.');
+      // Reverter alteração no estoque
+      const produtoIndex = produtos.findIndex(p => p.id === transacao.produtoId);
+      if (produtoIndex !== -1) {
+        const novosProdutos = [...produtos];
+        if (transacao.tipo === 'entrada') {
+          novosProdutos[produtoIndex].quantidade -= transacao.quantidade;
+        } else {
+          novosProdutos[produtoIndex].quantidade += transacao.quantidade;
+        }
+        setProdutos(novosProdutos);
       }
+
+      // Remover transação
+      setTransacoes(transacoes.filter(t => t.id !== transacao.id));
     }
   };
 
@@ -220,7 +240,7 @@ function App() {
     setActiveTab('cliente-panel');
   };
 
-  const handleVenda = async (vendaData: {
+  const handleVenda = (vendaData: {
     clienteId: string;
     numeroPedido?: string;
     itens: Array<{
@@ -233,36 +253,42 @@ function App() {
     observacoes?: string;
     anexos?: AnexoPDF[];
   }) => {
-    try {
-      // Criar uma transação para cada item da venda
-      for (const item of vendaData.itens) {
-        const transacao: Omit<Transacao, 'id' | 'createdAt'> = {
-          tipo: 'saida',
-          produtoId: item.produtoId,
-          clienteId: vendaData.clienteId,
-          numeroPedido: vendaData.numeroPedido,
-          quantidade: item.quantidade,
-          valorUnitario: item.valorUnitario,
-          valorTotal: item.valorTotal,
-          observacoes: vendaData.observacoes,
-          anexos: vendaData.anexos,
-        };
-        
-        await addTransacao(transacao);
-      }
+    const novasTransacoes: Transacao[] = [];
+    const novosProdutos = [...produtos];
+    const vendaId = `venda-${Date.now()}`;
+    const dataVenda = new Date();
 
-      setShowVendaForm(false);
-      
-      // Mostrar mensagem de sucesso
-      alert(`Venda realizada com sucesso! Total: R$ ${vendaData.valorTotal.toFixed(2)}`);
-    } catch (error: any) {
-      console.error('Erro ao realizar venda:', error);
-      if (error.response?.data?.detail) {
-        alert(error.response.data.detail);
-      } else {
-        alert('Erro ao realizar venda. Tente novamente.');
+    // Criar uma transação para cada item da venda
+    vendaData.itens.forEach((item, index) => {
+      const transacao: Transacao = {
+        id: `${vendaId}-item-${index}`,
+        tipo: 'saida',
+        produtoId: item.produtoId,
+        clienteId: vendaData.clienteId,
+        numeroPedido: vendaData.numeroPedido,
+        quantidade: item.quantidade,
+        valorUnitario: item.valorUnitario,
+        valorTotal: item.valorTotal,
+        observacoes: vendaData.observacoes,
+        anexos: vendaData.anexos,
+        createdAt: dataVenda
+      };
+      novasTransacoes.push(transacao);
+
+      // Atualizar estoque
+      const produtoIndex = novosProdutos.findIndex(p => p.id === item.produtoId);
+      if (produtoIndex !== -1) {
+        novosProdutos[produtoIndex].quantidade -= item.quantidade;
       }
-    }
+    });
+
+    // Atualizar estados
+    setProdutos(novosProdutos);
+    setTransacoes([...transacoes, ...novasTransacoes]);
+    setShowVendaForm(false);
+    
+    // Mostrar mensagem de sucesso
+    alert(`Venda realizada com sucesso! Total: R$ ${vendaData.valorTotal.toFixed(2)}`);
   };
 
   const handleViewProdutoPanel = (produto: Produto) => {

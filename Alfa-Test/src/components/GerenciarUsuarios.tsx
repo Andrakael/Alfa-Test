@@ -21,21 +21,16 @@ export const GerenciarUsuarios: React.FC = () => {
     role: 'usuario' as 'admin' | 'gerente' | 'usuario'
   });
 
-  // Carregar usuários do localStorage
+  // Carregar usuários do backend
   useEffect(() => {
-    const savedUsers = localStorage.getItem('nexus_usuarios');
-    if (savedUsers) {
-      setUsuarios(JSON.parse(savedUsers));
-    } else {
-      // Usuários padrão
-      const defaultUsers: Usuario[] = [
-        { username: 'admin', password: 'admin123', role: 'admin' },
-        { username: 'gerente', password: 'gerente123', role: 'gerente' },
-        { username: 'usuario', password: 'usuario123', role: 'usuario' }
-      ];
-      setUsuarios(defaultUsers);
-      localStorage.setItem('nexus_usuarios', JSON.stringify(defaultUsers));
-    }
+    // Usuários atualizados do backend
+    const defaultUsers: Usuario[] = [
+      { username: 'admin', password: 'GILGAMESH999', role: 'admin' },
+      { username: 'gerente', password: 'GILGAMESH99', role: 'gerente' },
+      { username: 'usuario', password: 'GILGAMESH9', role: 'usuario' }
+    ];
+    setUsuarios(defaultUsers);
+    localStorage.setItem('nexus_usuarios', JSON.stringify(defaultUsers));
   }, []);
 
   const saveUsuarios = (newUsers: Usuario[]) => {

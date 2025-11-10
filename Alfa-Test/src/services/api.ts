@@ -22,11 +22,20 @@ export const authAPI = {
     params.append('username', username);
     params.append('password', password);
     
+    console.log('🔑 Enviando credenciais:', { 
+      username, 
+      passwordLength: password.length,
+      paramsString: params.toString()
+    });
+    
     const response = await apiClient.post('/login', params, {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
     });
+    
+    console.log('📨 Resposta recebida:', response.data);
+    
     return response.data;
   },
 

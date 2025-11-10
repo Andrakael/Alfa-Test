@@ -1,45 +1,61 @@
-import React, { useState } from 'react';
-import { Lock, User, AlertCircle } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Lock, User, AlertCircle, Loader2, X } from 'lucide-react';
 
 interface LoginProps {
   onLogin: () => void;
 }
 
 export const Login: React.FC<LoginProps> = ({ onLogin }) => {
+  console.log('🔵 Login component mounted');
+  
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  
+  console.log('📝 Login state:', { username, password: password ? '***' : '', error, loading, errorLength: error.length });
 
   const handleSubmit = async (e: React.FormEvent) => {
+    console.log('🚀 SUBMIT DISPARADO!', { username, password });
     e.preventDefault();
-    setError('');
+    // Não limpar o erro aqui, só quando começar a digitar
     setLoading(true);
 
     try {
-      // Importar API
+      // Importar a API dinamicamente
       const { authAPI } = await import('../services/api');
       
-      // Fazer login na API
+      console.log('📡 Tentando login via API...');
       const response = await authAPI.login(username, password);
       
+      console.log('✅ Login bem-sucedido via API!', response);
+      
       // Salvar token e dados do usuário
-      localStorage.setItem('nexus_token', response.access_token);
       localStorage.setItem('nexus_auth', 'true');
       localStorage.setItem('nexus_user', response.user.username);
+      localStorage.setItem('nexus_token', response.access_token);
       localStorage.setItem('nexus_role', response.user.role);
       
       // Chamar callback de sucesso
       onLogin();
     } catch (error: any) {
-      console.error('Erro no login:', error);
+      console.error('❌ Erro no login:', error);
+      
+      let errorMessage = '';
       if (error.response?.status === 401) {
-        setError('Usuário ou senha incorretos!');
-      } else if (error.code === 'ERR_NETWORK') {
-        setError('Erro de conexão! Verifique se o backend está rodando.');
+        errorMessage = 'Usuário ou senha incorretos. Verifique suas credenciais e tente novamente.';
+      } else if (error.code === 'ERR_NETWORK' || error.message?.includes('Network')) {
+        errorMessage = 'Não foi possível conectar ao servidor. Verifique sua conexão ou se o backend está rodando.';
+      } else if (error.response?.status === 500) {
+        errorMessage = 'Erro interno do servidor. Tente novamente em alguns instantes.';
       } else {
-        setError('Erro ao fazer login. Tente novamente.');
+        errorMessage = error.response?.data?.detail || 'Erro inesperado ao fazer login. Tente novamente.';
       }
+      
+      console.log('🔴 Definindo erro:', errorMessage);
+      setError(errorMessage);
+      console.log('🔴 Erro definido!');
+      
       setPassword('');
     } finally {
       setLoading(false);
@@ -69,9 +85,27 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
           </h2>
 
           {error && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-2 text-red-700">
-              <AlertCircle className="h-5 w-5 flex-shrink-0" />
-              <span className="text-sm">{error}</span>
+            <div 
+              key={error}
+              className="mb-4 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg flex items-start space-x-3 text-red-700"
+              style={{ animation: 'shake 0.5s ease-in-out' }}
+            >
+              <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="font-semibold text-sm">Erro ao fazer login</p>
+                <p className="text-sm mt-1">{error}</p>
+              </div>
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  setError('');
+                }}
+                className="text-red-400 hover:text-red-600 transition-colors focus:outline-none"
+                type="button"
+                aria-label="Fechar mensagem de erro"
+              >
+                <X className="h-5 w-5" />
+              </button>
             </div>
           )}
 
@@ -121,9 +155,10 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:from-purple-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:from-purple-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center space-x-2"
             >
-              {loading ? 'Entrando...' : 'Entrar'}
+              {loading && <Loader2 className="h-5 w-5 animate-spin" />}
+              <span>{loading ? 'Autenticando...' : 'Entrar'}</span>
             </button>
           </form>
 
