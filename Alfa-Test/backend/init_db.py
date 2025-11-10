@@ -28,19 +28,19 @@ def init_database():
             {
                 "username": "admin",
                 "email": "admin@nexus.com",
-                "password": "admin123",
+                "password": "Admin@2024!Nexus",
                 "role": "admin"
             },
             {
                 "username": "gerente",
                 "email": "gerente@nexus.com",
-                "password": "gerente123",
+                "password": "Gerente@2024!Nexus",
                 "role": "gerente"
             },
             {
                 "username": "usuario",
                 "email": "usuario@nexus.com",
-                "password": "usuario123",
+                "password": "Usuario@2024!Nexus",
                 "role": "usuario"
             }
         ]
@@ -59,9 +59,9 @@ def init_database():
         db.commit()
         print("\n🎉 Banco de dados inicializado com sucesso!")
         print("\n📋 Usuários criados:")
-        print("  • admin / admin123 (Administrador)")
-        print("  • gerente / gerente123 (Gerente)")
-        print("  • usuario / usuario123 (Usuário)")
+        print("  • admin / Admin@2024!Nexus (Administrador)")
+        print("  • gerente / Gerente@2024!Nexus (Gerente)")
+        print("  • usuario / Usuario@2024!Nexus (Usuário)")
         
     except Exception as e:
         print(f"❌ Erro ao inicializar banco: {e}")

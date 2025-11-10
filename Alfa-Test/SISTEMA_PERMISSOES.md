@@ -230,17 +230,17 @@ if (hasPermission('canAddProduto')) {
 
 ### Admin
 - **Usuário:** `admin`
-- **Senha:** `admin123`
+- **Senha:** `Admin@2024!Nexus`
 - **Acesso:** Total
 
 ### Gerente
 - **Usuário:** `gerente`
-- **Senha:** `gerente123`
+- **Senha:** `Gerente@2024!Nexus`
 - **Acesso:** Gestão Operacional
 
 ### Usuário
 - **Usuário:** `usuario`
-- **Senha:** `usuario123`
+- **Senha:** `Usuario@2024!Nexus`
 - **Acesso:** Vendas Básicas
 
 ---
