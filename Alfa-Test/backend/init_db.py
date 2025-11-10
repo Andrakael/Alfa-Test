@@ -70,4 +70,4 @@ def init_database():
         db.close()
 
 if __name__ == "__main__":
-    init_db()
+    init_database()
