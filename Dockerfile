@@ -1,15 +1,30 @@
-FROM python:3.10-slim
+# Build stage
+FROM node:18-alpine as build
 
 WORKDIR /app
 
-# Copiar código do backend
-COPY backend ./backend
+# Copiar package files
+COPY package*.json ./
 
 # Instalar dependências
-RUN pip install --no-cache-dir -r backend/requirements.txt
+RUN npm ci
+
+# Copiar código fonte
+COPY . .
+
+# Build da aplicação
+RUN npm run build
+
+# Production stage
+FROM nginx:alpine
+
+# Copiar build para nginx
+COPY --from=build /app/build /usr/share/nginx/html
+
+# Copiar configuração customizada do nginx
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Expor porta
-EXPOSE 8000
+EXPOSE 80
 
-# Comando de start usando shell form para suportar variáveis de ambiente
-CMD python3 -m uvicorn backend.main:app --host 0.0.0.0 --port ${PORT:-8000}
+CMD ["nginx", "-g", "daemon off;"]
