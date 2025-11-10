@@ -112,7 +112,7 @@ export class ChatBot {
   }
 
   private isProdutosMaisVendidos(msg: string): boolean {
-    return (msg.includes('mais vendido') || msg.includes('top') && msg.includes('produto') || msg.includes('best seller'));
+    return (msg.includes('mais vendido') || (msg.includes('top') && msg.includes('produto')) || msg.includes('best seller'));
   }
 
   private isMelhoresClientes(msg: string): boolean {
@@ -140,7 +140,7 @@ export class ChatBot {
   }
 
   private isEstoque(msg: string): boolean {
-    return msg.includes('estoque') || msg.includes('quantidade') && !msg.includes('valor');
+    return msg.includes('estoque') || (msg.includes('quantidade') && !msg.includes('valor'));
   }
 
   private isTotalVendas(msg: string): boolean {

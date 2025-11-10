@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Lock, User, AlertCircle, Loader2, X } from 'lucide-react';
 
 interface LoginProps {
