@@ -2,12 +2,8 @@ FROM python:3.10-slim
 
 WORKDIR /app
 
-# Copiar código do backend primeiro
+# Copiar código do backend
 COPY backend ./backend
-
-# Copiar entrypoint
-COPY entrypoint.py .
-RUN chmod +x entrypoint.py
 
 # Instalar dependências
 RUN pip install --no-cache-dir -r backend/requirements.txt
@@ -15,5 +11,5 @@ RUN pip install --no-cache-dir -r backend/requirements.txt
 # Expor porta
 EXPOSE 8000
 
-# Comando de start
-CMD ["python3", "entrypoint.py"]
+# Comando de start usando shell form para suportar variáveis de ambiente
+CMD python3 -m uvicorn backend.main:app --host 0.0.0.0 --port ${PORT:-8000}
