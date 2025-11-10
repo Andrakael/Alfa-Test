@@ -9,12 +9,12 @@ interface ProtectedSectionProps {
   fallback?: React.ReactNode;
 }
 
-export const ProtectedSection: React.FC<ProtectedSectionProps> = ({ 
+export const ProtectedSection = ({ 
   children, 
   permission,
   requiredRole = 'administrador ou gerente',
   fallback 
-}): React.ReactElement | null => {
+}: ProtectedSectionProps): React.ReactElement | null => {
   const hasAccess = hasPermission(permission as any);
 
   if (!hasAccess) {
