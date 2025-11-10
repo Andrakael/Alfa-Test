@@ -5,9 +5,9 @@ WORKDIR /app
 # Copiar código do backend primeiro
 COPY backend ./backend
 
-# Copiar script de start
-COPY start.sh .
-RUN chmod +x start.sh
+# Copiar entrypoint
+COPY entrypoint.py .
+RUN chmod +x entrypoint.py
 
 # Instalar dependências
 RUN pip install --no-cache-dir -r backend/requirements.txt
@@ -16,4 +16,4 @@ RUN pip install --no-cache-dir -r backend/requirements.txt
 EXPOSE 8000
 
 # Comando de start
-CMD ["./start.sh"]
+CMD ["python3", "entrypoint.py"]
