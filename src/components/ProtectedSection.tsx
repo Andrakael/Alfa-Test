@@ -14,12 +14,12 @@ export const ProtectedSection: React.FC<ProtectedSectionProps> = ({
   permission,
   requiredRole = 'administrador ou gerente',
   fallback 
-}) => {
+}): React.ReactElement | null => {
   const hasAccess = hasPermission(permission as any);
 
   if (!hasAccess) {
-    return fallback || <AccessDenied requiredRole={requiredRole} />;
+    return (fallback as React.ReactElement) || <AccessDenied requiredRole={requiredRole} />;
   }
 
-  return <>{children}</>;
+  return <>{children}</> as React.ReactElement;
 };
