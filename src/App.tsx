@@ -1505,7 +1505,7 @@ renderProdutos = () => {
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Erro ao Carregar Dados</h2>
           <p className="text-gray-600 mb-4">{error}</p>
           <p className="text-sm text-gray-500 mb-4">
-            Verifique se o backend está rodando em http://localhost:8000
+            Verifique sua conexão com a internet e tente novamente
           </p>
           <button
             onClick={() => window.location.reload()}
