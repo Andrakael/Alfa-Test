@@ -8,6 +8,9 @@ COPY backend ./backend
 # Instalar dependências
 RUN pip install --no-cache-dir -r backend/requirements.txt
 
+# Inicializar banco de dados
+RUN cd backend && python3 init_db.py
+
 # Expor porta
 EXPOSE 8000
 
