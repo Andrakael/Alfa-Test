@@ -1,6 +1,7 @@
+
 import React from 'react';
-import { ArrowLeft, User, Calendar, Package, DollarSign, FileText, ShoppingCart, Tag, Download } from 'lucide-react';
-import { Produto, Cliente, Transacao, Categoria, AnexoPDF } from '../types';
+import { ArrowLeft, User, Calendar, Package, DollarSign, FileText, Tag, Download } from 'lucide-react';
+import { Produto, Cliente, Transacao, Categoria } from '../types';
 
 interface VendaDetalhesProps {
   vendaId: string;
@@ -200,70 +201,49 @@ export const VendaDetalhes: React.FC<VendaDetalhesProps> = ({
                 }
               };
 
-              const getTipoCor = (tipo: string) => {
-                switch (tipo) {
-                  case 'orcamento_fornecedor': return 'purple';
-                  case 'documento_empresa': return 'blue';
-                  default: return 'green';
-                }
-              };
-
-              const estilos = {
-                orcamento_fornecedor: {
-                  border: 'border-purple-200',
-                  bg: 'bg-purple-50',
-                  iconBg: 'bg-purple-100',
-                  icon: 'text-purple-600',
-                  text: 'text-purple-900',
-                  subtext: 'text-purple-700',
-                  size: 'text-purple-600',
-                  download: 'text-purple-500'
-                },
-                documento_empresa: {
-                  border: 'border-blue-200',
-                  bg: 'bg-blue-50',
-                  iconBg: 'bg-blue-100',
-                  icon: 'text-blue-600',
-                  text: 'text-blue-900',
-                  subtext: 'text-blue-700',
-                  size: 'text-blue-600',
-                  download: 'text-blue-500'
-                },
-                outros: {
-                  border: 'border-green-200',
-                  bg: 'bg-green-50',
-                  iconBg: 'bg-green-100',
-                  icon: 'text-green-600',
-                  text: 'text-green-900',
-                  subtext: 'text-green-700',
-                  size: 'text-green-600',
-                  download: 'text-green-500'
-                }
-              };
-
-              const estilo = estilos[anexo.tipo as keyof typeof estilos] || estilos.outros;
-
+              const corCard = anexo.tipo === 'orcamento_fornecedor' ? 'purple' : 
+                             anexo.tipo === 'documento_empresa' ? 'blue' : 'green';
+              
               return (
                 <div
                   key={anexo.id}
-                  className={`border-2 ${estilo.border} ${estilo.bg} rounded-lg p-4 hover:shadow-lg transition-all cursor-pointer group`}
+                  className={`border-2 rounded-lg p-4 hover:shadow-lg transition-all cursor-pointer group ${
+                    corCard === 'purple' ? 'border-purple-300 bg-purple-50 hover:bg-purple-100' :
+                    corCard === 'blue' ? 'border-blue-300 bg-blue-50 hover:bg-blue-100' :
+                    'border-green-300 bg-green-50 hover:bg-green-100'
+                  }`}
                   onClick={downloadAnexo}
                 >
                   <div className="flex items-start space-x-3">
-                    <div className={`p-3 ${estilo.iconBg} rounded-lg group-hover:scale-110 transition-transform`}>
-                      <FileText className={`h-6 w-6 ${estilo.icon}`} />
+                    <div className={`p-3 rounded-lg group-hover:scale-110 transition-transform ${
+                      corCard === 'purple' ? 'bg-purple-500' :
+                      corCard === 'blue' ? 'bg-blue-500' : 'bg-green-500'
+                    }`}>
+                      <FileText className="h-6 w-6 text-white" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className={`text-sm font-medium ${estilo.text} truncate`}>
+                      <p className={`text-sm font-medium truncate ${
+                        corCard === 'purple' ? 'text-purple-900' :
+                        corCard === 'blue' ? 'text-blue-900' : 'text-green-900'
+                      }`}>
                         {anexo.nome}
                       </p>
-                      <p className={`text-xs ${estilo.subtext} mt-1 font-medium`}>
+                      <p className={`text-xs mt-1 font-medium ${
+                        corCard === 'purple' ? 'text-purple-700' :
+                        corCard === 'blue' ? 'text-blue-700' : 'text-green-700'
+                      }`}>
                         {getTipoLabel(anexo.tipo)}
                       </p>
-                      <p className={`text-xs ${estilo.size} mt-1`}>
+                      <p className={`text-xs mt-1 ${
+                        corCard === 'purple' ? 'text-purple-600' :
+                        corCard === 'blue' ? 'text-blue-600' : 'text-green-600'
+                      }`}>
                         {formatarTamanho(anexo.tamanho)}
                       </p>
-                      <div className={`flex items-center space-x-1 text-xs ${estilo.download} mt-2 font-medium`}>
+                      <div className={`flex items-center space-x-1 text-xs mt-2 font-medium ${
+                        corCard === 'purple' ? 'text-purple-600' :
+                        corCard === 'blue' ? 'text-blue-600' : 'text-green-600'
+                      }`}>
                         <Download className="h-3 w-3" />
                         <span>Clique para baixar</span>
                       </div>

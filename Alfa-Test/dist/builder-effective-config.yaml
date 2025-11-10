@@ -1,0 +1,33 @@
+directories:
+  output: dist
+  buildResources: public
+files:
+  - filter:
+      - build/**/*
+      - build/**/*
+      - node_modules/**/*
+      - public/electron.js
+      - public/preload.js
+      - public/logo192.png
+      - src/database/**/*
+extraMetadata:
+  main: build/electron.js
+appId: com.nexus.gestao-estoque
+productName: NEXUS - Sistema de Gestão de Estoque IA
+extraResources:
+  - from: src/database/schema.sql
+    to: database/schema.sql
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+  icon: public/logo192.png
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: NEXUS - Gestão de Estoque IA
+extends: react-cra
+electronVersion: 39.1.1

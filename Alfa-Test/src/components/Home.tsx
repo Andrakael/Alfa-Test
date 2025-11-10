@@ -108,7 +108,7 @@ export const Home: React.FC<HomeProps> = ({
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold mb-2">
-              Bem-vindo ao Sistema de Gestão! 👋
+              Bem-vindo ao NEXUS - Sistema de Gestão de Estoque IA! 👋
             </h1>
             <p className="text-blue-100 text-lg">
               Aqui está um resumo do seu negócio hoje, {new Date().toLocaleDateString('pt-BR')}

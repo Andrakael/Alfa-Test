@@ -3,30 +3,84 @@
   "version": "1.0.1",
   "private": true,
   "dependencies": {
+    "@types/better-sqlite3": "^7.6.13",
     "@types/node": "^18.0.0",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
+    "axios": "^1.13.2",
+    "better-sqlite3": "^12.4.1",
+    "lucide-react": "^0.263.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-scripts": "5.0.1",
     "typescript": "^5.0.0",
-    "lucide-react": "^0.263.1",
     "web-vitals": "^3.0.0"
   },
   "devDependencies": {
-    "tailwindcss": "^3.3.0",
     "autoprefixer": "^10.4.14",
-    "postcss": "^8.4.24"
+    "concurrently": "^9.2.1",
+    "cross-env": "^10.1.0",
+    "electron": "^39.1.1",
+    "electron-builder": "^26.0.12",
+    "electron-is-dev": "^3.0.1",
+    "postcss": "^8.4.24",
+    "tailwindcss": "^3.3.0",
+    "wait-on": "^9.0.3"
   },
+  "main": "public/electron.js",
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "deploy": "npm run build",
-    "serve": "npx serve -s build"
+    "serve": "npx serve -s build",
+    "electron:dev": "concurrently \"cross-env BROWSER=none npm start\" \"wait-on http://localhost:3000 && electron .\"",
+    "electron:build": "npm run build && electron-builder",
+    "electron:build:win": "npm run build && electron-builder --win --x64",
+    "electron:build:all": "npm run build && electron-builder -mwl"
   },
-  "homepage": ".",
+  "homepage": "./",
+  "build": {
+    "appId": "com.nexus.gestao-estoque",
+    "productName": "NEXUS - Sistema de Gestão de Estoque IA",
+    "files": [
+      "build/**/*",
+      "node_modules/**/*",
+      "public/electron.js",
+      "public/preload.js",
+      "public/logo192.png",
+      "src/database/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "src/database/schema.sql",
+        "to": "database/schema.sql"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "public/logo192.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "NEXUS - Gestão de Estoque IA"
+    },
+    "directories": {
+      "buildResources": "public",
+      "output": "dist"
+    }
+  },
   "eslintConfig": {
     "extends": [
       "react-app",

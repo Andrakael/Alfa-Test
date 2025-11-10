@@ -7,7 +7,7 @@ import { TransacaoForm } from './components/TransacaoForm';
 import { ChatBot } from './components/ChatBot';
 import { ClientePanel } from './components/ClientePanel';
 import { ProdutoPanel } from './components/ProdutoPanel';
-import { useLocalStorage } from './hooks/useLocalStorage';
+import { useAPI } from './hooks/useAPI';
 import { Produto, Cliente, Transacao, Categoria, AnexoPDF } from './types';
 import { ChatBot as ChatBotService } from './services/chatBot';
 import { CategoriaForm } from './components/CategoriaForm';
@@ -40,72 +40,31 @@ function App() {
   const handleLogout = () => {
     localStorage.removeItem('nexus_auth');
     localStorage.removeItem('nexus_user');
+    localStorage.removeItem('nexus_token');
+    localStorage.removeItem('nexus_role');
     setIsAuthenticated(false);
   };
 
-  // Todos os hooks devem vir ANTES de qualquer return condicional
-  const [produtos, setProdutos] = useLocalStorage<Produto[]>('produtos', [
-    {
-      id: 'prod-1',
-      nome: 'Placa Solar 550W',
-      valor: 450.00,
-      quantidade: 20,
-      categoriaId: '2',
-      descricao: 'Placa solar monocristalina 550W',
-      createdAt: new Date()
-    },
-    {
-      id: 'prod-2',
-      nome: 'Inversor 3000W',
-      valor: 1200.00,
-      quantidade: 5,
-      categoriaId: '1',
-      descricao: 'Inversor solar 3000W',
-      createdAt: new Date()
-    }
-  ]);
-  const [clientes, setClientes] = useLocalStorage<Cliente[]>('clientes', [
-    {
-      id: 'cli-1',
-      nome: 'João Silva',
-      email: 'joao@email.com',
-      telefone: '(11) 99999-9999',
-      endereco: 'Rua das Flores, 123',
-      createdAt: new Date()
-    },
-    {
-      id: 'cli-2',
-      nome: 'Maria Santos',
-      email: 'maria@email.com',
-      telefone: '(11) 88888-8888',
-      endereco: 'Av. Principal, 456',
-      createdAt: new Date()
-    }
-  ]);
-  const [transacoes, setTransacoes] = useLocalStorage<Transacao[]>('transacoes', []);
-  const [categorias, setCategorias] = useLocalStorage<Categoria[]>('categorias', [
-    {
-      id: '1',
-      nome: 'Eletrônicos',
-      descricao: 'Produtos eletrônicos em geral',
-      cor: '#3B82F6',
-      createdAt: new Date()
-    },
-    {
-      id: '2',
-      nome: 'Placas Solares',
-      descricao: 'Equipamentos de energia solar',
-      cor: '#F59E0B',
-      createdAt: new Date()
-    },
-    {
-      id: '3',
-      nome: 'Ferramentas',
-      descricao: 'Ferramentas e equipamentos',
-      cor: '#10B981',
-      createdAt: new Date()
-    }
-  ]);
+  // Usar hook da API para gerenciar dados
+  const {
+    produtos,
+    clientes,
+    transacoes,
+    categorias,
+    loading,
+    error,
+    addProduto,
+    updateProduto,
+    deleteProduto,
+    addCliente,
+    updateCliente,
+    deleteCliente,
+    addCategoria,
+    updateCategoria,
+    deleteCategoria,
+    addTransacao,
+    deleteTransacao,
+  } = useAPI();
   
   const [showProdutoForm, setShowProdutoForm] = useState(false);
   const [showClienteForm, setShowClienteForm] = useState(false);
@@ -126,26 +85,21 @@ function App() {
 
   const chatBot = new ChatBotService(produtos, clientes, transacoes);
 
-  const handleAddProduto = (produtoData: Omit<Produto, 'id' | 'createdAt'>) => {
-    if (editingProduto) {
-      // Editando produto existente
-      const produtosAtualizados = produtos.map(p => 
-        p.id === editingProduto.id 
-          ? { ...editingProduto, ...produtoData }
-          : p
-      );
-      setProdutos(produtosAtualizados);
-      setEditingProduto(null);
-    } else {
-      // Adicionando novo produto
-      const novoProduto: Produto = {
-        ...produtoData,
-        id: Date.now().toString(),
-        createdAt: new Date()
-      };
-      setProdutos([...produtos, novoProduto]);
+  const handleAddProduto = async (produtoData: Omit<Produto, 'id' | 'createdAt'>) => {
+    try {
+      if (editingProduto) {
+        // Editando produto existente
+        await updateProduto(editingProduto.id, produtoData);
+        setEditingProduto(null);
+      } else {
+        // Adicionando novo produto
+        await addProduto(produtoData);
+      }
+      setShowProdutoForm(false);
+    } catch (error) {
+      console.error('Erro ao salvar produto:', error);
+      alert('Erro ao salvar produto. Tente novamente.');
     }
-    setShowProdutoForm(false);
   };
 
   const handleEditProduto = (produto: Produto) => {
@@ -153,32 +107,32 @@ function App() {
     setShowProdutoForm(true);
   };
 
-  const handleDeleteProduto = (produtoId: string) => {
+  const handleDeleteProduto = async (produtoId: string) => {
     if (window.confirm('Tem certeza que deseja excluir este produto?')) {
-      setProdutos(produtos.filter(p => p.id !== produtoId));
+      try {
+        await deleteProduto(produtoId);
+      } catch (error) {
+        console.error('Erro ao deletar produto:', error);
+        alert('Erro ao deletar produto. Tente novamente.');
+      }
     }
   };
 
-  const handleAddCliente = (clienteData: Omit<Cliente, 'id' | 'createdAt'>) => {
-    if (editingCliente) {
-      // Editando cliente existente
-      const clientesAtualizados = clientes.map(c => 
-        c.id === editingCliente.id 
-          ? { ...editingCliente, ...clienteData }
-          : c
-      );
-      setClientes(clientesAtualizados);
-      setEditingCliente(null);
-    } else {
-      // Adicionando novo cliente
-      const novoCliente: Cliente = {
-        ...clienteData,
-        id: Date.now().toString(),
-        createdAt: new Date()
-      };
-      setClientes([...clientes, novoCliente]);
+  const handleAddCliente = async (clienteData: Omit<Cliente, 'id' | 'createdAt'>) => {
+    try {
+      if (editingCliente) {
+        // Editando cliente existente
+        await updateCliente(editingCliente.id, clienteData);
+        setEditingCliente(null);
+      } else {
+        // Adicionando novo cliente
+        await addCliente(clienteData);
+      }
+      setShowClienteForm(false);
+    } catch (error) {
+      console.error('Erro ao salvar cliente:', error);
+      alert('Erro ao salvar cliente. Tente novamente.');
     }
-    setShowClienteForm(false);
   };
 
   const handleEditCliente = (cliente: Cliente) => {
@@ -186,32 +140,32 @@ function App() {
     setShowClienteForm(true);
   };
 
-  const handleDeleteCliente = (clienteId: string) => {
+  const handleDeleteCliente = async (clienteId: string) => {
     if (window.confirm('Tem certeza que deseja excluir este cliente?')) {
-      setClientes(clientes.filter(c => c.id !== clienteId));
+      try {
+        await deleteCliente(clienteId);
+      } catch (error) {
+        console.error('Erro ao deletar cliente:', error);
+        alert('Erro ao deletar cliente. Tente novamente.');
+      }
     }
   };
 
-  const handleAddCategoria = (categoriaData: Omit<Categoria, 'id' | 'createdAt'>) => {
-    if (editingCategoria) {
-      // Editando categoria existente
-      const categoriasAtualizadas = categorias.map(c => 
-        c.id === editingCategoria.id 
-          ? { ...editingCategoria, ...categoriaData }
-          : c
-      );
-      setCategorias(categoriasAtualizadas);
-      setEditingCategoria(null);
-    } else {
-      // Adicionando nova categoria
-      const novaCategoria: Categoria = {
-        ...categoriaData,
-        id: Date.now().toString(),
-        createdAt: new Date()
-      };
-      setCategorias([...categorias, novaCategoria]);
+  const handleAddCategoria = async (categoriaData: Omit<Categoria, 'id' | 'createdAt'>) => {
+    try {
+      if (editingCategoria) {
+        // Editando categoria existente
+        await updateCategoria(editingCategoria.id, categoriaData);
+        setEditingCategoria(null);
+      } else {
+        // Adicionando nova categoria
+        await addCategoria(categoriaData);
+      }
+      setShowCategoriaForm(false);
+    } catch (error) {
+      console.error('Erro ao salvar categoria:', error);
+      alert('Erro ao salvar categoria. Tente novamente.');
     }
-    setShowCategoriaForm(false);
   };
 
   const handleEditCategoria = (categoria: Categoria) => {
@@ -219,7 +173,7 @@ function App() {
     setShowCategoriaForm(true);
   };
 
-  const handleDeleteCategoria = (categoriaId: string) => {
+  const handleDeleteCategoria = async (categoriaId: string) => {
     const produtosComCategoria = produtos.filter(p => p.categoriaId === categoriaId);
     if (produtosComCategoria.length > 0) {
       alert(`Não é possível excluir esta categoria pois existem ${produtosComCategoria.length} produtos vinculados a ela.`);
@@ -227,49 +181,37 @@ function App() {
     }
     
     if (window.confirm('Tem certeza que deseja excluir esta categoria?')) {
-      setCategorias(categorias.filter(c => c.id !== categoriaId));
+      try {
+        await deleteCategoria(categoriaId);
+      } catch (error) {
+        console.error('Erro ao deletar categoria:', error);
+        alert('Erro ao deletar categoria. Tente novamente.');
+      }
     }
   };
 
-  const handleAddTransacao = (transacaoData: Omit<Transacao, 'id' | 'createdAt'>) => {
-    const novaTransacao: Transacao = {
-      ...transacaoData,
-      id: Date.now().toString(),
-      createdAt: new Date()
-    };
-
-    // Atualizar estoque do produto
-    const produtoIndex = produtos.findIndex(p => p.id === transacaoData.produtoId);
-    if (produtoIndex !== -1) {
-      const novosProdutos = [...produtos];
-      if (transacaoData.tipo === 'entrada') {
-        novosProdutos[produtoIndex].quantidade += transacaoData.quantidade;
+  const handleAddTransacao = async (transacaoData: Omit<Transacao, 'id' | 'createdAt'>) => {
+    try {
+      await addTransacao(transacaoData);
+      setShowTransacaoForm(false);
+    } catch (error: any) {
+      console.error('Erro ao adicionar transação:', error);
+      if (error.response?.data?.detail) {
+        alert(error.response.data.detail);
       } else {
-        novosProdutos[produtoIndex].quantidade -= transacaoData.quantidade;
+        alert('Erro ao adicionar transação. Tente novamente.');
       }
-      setProdutos(novosProdutos);
     }
-
-    setTransacoes([...transacoes, novaTransacao]);
-    setShowTransacaoForm(false);
   };
 
-  const handleUndoTransacao = (transacao: Transacao) => {
+  const handleUndoTransacao = async (transacao: Transacao) => {
     if (window.confirm('Tem certeza que deseja desfazer esta transação?')) {
-      // Reverter alteração no estoque
-      const produtoIndex = produtos.findIndex(p => p.id === transacao.produtoId);
-      if (produtoIndex !== -1) {
-        const novosProdutos = [...produtos];
-        if (transacao.tipo === 'entrada') {
-          novosProdutos[produtoIndex].quantidade -= transacao.quantidade;
-        } else {
-          novosProdutos[produtoIndex].quantidade += transacao.quantidade;
-        }
-        setProdutos(novosProdutos);
+      try {
+        await deleteTransacao(transacao.id);
+      } catch (error) {
+        console.error('Erro ao desfazer transação:', error);
+        alert('Erro ao desfazer transação. Tente novamente.');
       }
-
-      // Remover transação
-      setTransacoes(transacoes.filter(t => t.id !== transacao.id));
     }
   };
 
@@ -278,7 +220,7 @@ function App() {
     setActiveTab('cliente-panel');
   };
 
-  const handleVenda = (vendaData: {
+  const handleVenda = async (vendaData: {
     clienteId: string;
     numeroPedido?: string;
     itens: Array<{
@@ -291,42 +233,36 @@ function App() {
     observacoes?: string;
     anexos?: AnexoPDF[];
   }) => {
-    const novasTransacoes: Transacao[] = [];
-    const novosProdutos = [...produtos];
-    const vendaId = `venda-${Date.now()}`;
-    const dataVenda = new Date();
-
-    // Criar uma transação para cada item da venda
-    vendaData.itens.forEach((item, index) => {
-      const transacao: Transacao = {
-        id: `${vendaId}-item-${index}`,
-        tipo: 'saida',
-        produtoId: item.produtoId,
-        clienteId: vendaData.clienteId,
-        numeroPedido: vendaData.numeroPedido,
-        quantidade: item.quantidade,
-        valorUnitario: item.valorUnitario,
-        valorTotal: item.valorTotal,
-        observacoes: vendaData.observacoes,
-        anexos: vendaData.anexos,
-        createdAt: dataVenda
-      };
-      novasTransacoes.push(transacao);
-
-      // Atualizar estoque
-      const produtoIndex = novosProdutos.findIndex(p => p.id === item.produtoId);
-      if (produtoIndex !== -1) {
-        novosProdutos[produtoIndex].quantidade -= item.quantidade;
+    try {
+      // Criar uma transação para cada item da venda
+      for (const item of vendaData.itens) {
+        const transacao: Omit<Transacao, 'id' | 'createdAt'> = {
+          tipo: 'saida',
+          produtoId: item.produtoId,
+          clienteId: vendaData.clienteId,
+          numeroPedido: vendaData.numeroPedido,
+          quantidade: item.quantidade,
+          valorUnitario: item.valorUnitario,
+          valorTotal: item.valorTotal,
+          observacoes: vendaData.observacoes,
+          anexos: vendaData.anexos,
+        };
+        
+        await addTransacao(transacao);
       }
-    });
 
-    // Atualizar estados
-    setProdutos(novosProdutos);
-    setTransacoes([...transacoes, ...novasTransacoes]);
-    setShowVendaForm(false);
-    
-    // Mostrar mensagem de sucesso
-    alert(`Venda realizada com sucesso! Total: R$ ${vendaData.valorTotal.toFixed(2)}`);
+      setShowVendaForm(false);
+      
+      // Mostrar mensagem de sucesso
+      alert(`Venda realizada com sucesso! Total: R$ ${vendaData.valorTotal.toFixed(2)}`);
+    } catch (error: any) {
+      console.error('Erro ao realizar venda:', error);
+      if (error.response?.data?.detail) {
+        alert(error.response.data.detail);
+      } else {
+        alert('Erro ao realizar venda. Tente novamente.');
+      }
+    }
   };
 
   const handleViewProdutoPanel = (produto: Produto) => {
@@ -353,32 +289,9 @@ function App() {
     return chatBot.processMessage(message);
   };
 
-  const handleLimparDados = (tipo: 'todos' | 'produtos' | 'clientes' | 'transacoes' | 'categorias') => {
-    switch (tipo) {
-      case 'todos':
-        setProdutos([]);
-        setClientes([]);
-        setTransacoes([]);
-        setCategorias([]);
-        alert('Todos os dados foram removidos com sucesso!');
-        break;
-      case 'produtos':
-        setProdutos([]);
-        alert('Todos os produtos foram removidos com sucesso!');
-        break;
-      case 'clientes':
-        setClientes([]);
-        alert('Todos os clientes foram removidos com sucesso!');
-        break;
-      case 'transacoes':
-        setTransacoes([]);
-        alert('Todas as transações foram removidas com sucesso!');
-        break;
-      case 'categorias':
-        setCategorias([]);
-        alert('Todas as categorias foram removidas com sucesso!');
-        break;
-    }
+  const handleLimparDados = async (tipo: 'todos' | 'produtos' | 'clientes' | 'transacoes' | 'categorias') => {
+    alert('Funcionalidade de limpar dados será implementada em breve no backend.');
+    // TODO: Implementar endpoints de limpeza no backend
   };
 
   const handleExportarDados = () => {
@@ -404,17 +317,9 @@ function App() {
     alert('Dados exportados com sucesso!');
   };
 
-  const handleImportarDados = (dados: any) => {
-    try {
-      if (dados.produtos) setProdutos(dados.produtos);
-      if (dados.clientes) setClientes(dados.clientes);
-      if (dados.transacoes) setTransacoes(dados.transacoes);
-      if (dados.categorias) setCategorias(dados.categorias);
-      
-      alert('Dados importados com sucesso!');
-    } catch (error) {
-      alert('Erro ao importar dados. Verifique o formato do arquivo.');
-    }
+  const handleImportarDados = async (dados: any) => {
+    alert('Funcionalidade de importar dados será implementada em breve no backend.');
+    // TODO: Implementar endpoints de importação no backend
   };
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -1551,6 +1456,40 @@ renderProdutos = () => {
   // Se não estiver autenticado, mostrar tela de login
   if (!isAuthenticated) {
     return <Login onLogin={handleLogin} />;
+  }
+
+  // Mostrar loading enquanto carrega dados
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-purple-50/30 to-pink-50/30">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-purple-600 mb-4"></div>
+          <p className="text-lg text-gray-700 font-medium">Carregando dados...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Mostrar erro se houver
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-purple-50/30 to-pink-50/30">
+        <div className="max-w-md w-full bg-white rounded-lg shadow-lg border-2 border-red-200 p-8 text-center">
+          <div className="text-red-600 text-6xl mb-4">⚠️</div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Erro ao Carregar Dados</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <p className="text-sm text-gray-500 mb-4">
+            Verifique se o backend está rodando em http://localhost:8000
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700"
+          >
+            Tentar Novamente
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (

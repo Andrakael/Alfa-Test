@@ -11,52 +11,39 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
-    // Simular delay de autenticação
-    setTimeout(() => {
-      // Buscar usuários do localStorage
-      const savedUsers = localStorage.getItem('nexus_usuarios');
-      let usuarios: any = {};
+    try {
+      // Importar API
+      const { authAPI } = await import('../services/api');
       
-      if (savedUsers) {
-        const userList = JSON.parse(savedUsers);
-        userList.forEach((u: any) => {
-          usuarios[u.username] = { password: u.password, role: u.role };
-        });
-      } else {
-        // Usuários padrão se não existir
-        usuarios = {
-          'admin': { password: 'admin123', role: 'admin' },
-          'gerente': { password: 'gerente123', role: 'gerente' },
-          'usuario': { password: 'usuario123', role: 'usuario' }
-        };
-        // Salvar usuários padrão
-        const defaultUsers = [
-          { username: 'admin', password: 'admin123', role: 'admin' },
-          { username: 'gerente', password: 'gerente123', role: 'gerente' },
-          { username: 'usuario', password: 'usuario123', role: 'usuario' }
-        ];
-        localStorage.setItem('nexus_usuarios', JSON.stringify(defaultUsers));
-      }
+      // Fazer login na API
+      const response = await authAPI.login(username, password);
       
-      const user = usuarios[username];
+      // Salvar token e dados do usuário
+      localStorage.setItem('nexus_token', response.access_token);
+      localStorage.setItem('nexus_auth', 'true');
+      localStorage.setItem('nexus_user', response.user.username);
+      localStorage.setItem('nexus_role', response.user.role);
       
-      if (user && password === user.password) {
-        // Salvar sessão
-        localStorage.setItem('nexus_auth', 'true');
-        localStorage.setItem('nexus_user', username);
-        localStorage.setItem('nexus_role', user.role);
-        onLogin();
-      } else {
+      // Chamar callback de sucesso
+      onLogin();
+    } catch (error: any) {
+      console.error('Erro no login:', error);
+      if (error.response?.status === 401) {
         setError('Usuário ou senha incorretos!');
-        setPassword('');
+      } else if (error.code === 'ERR_NETWORK') {
+        setError('Erro de conexão! Verifique se o backend está rodando.');
+      } else {
+        setError('Erro ao fazer login. Tente novamente.');
       }
+      setPassword('');
+    } finally {
       setLoading(false);
-    }, 500);
+    }
   };
 
   return (
