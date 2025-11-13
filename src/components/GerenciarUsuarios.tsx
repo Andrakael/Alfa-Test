@@ -1,94 +1,118 @@
 import React, { useState, useEffect } from 'react';
-import { Users, Plus, Edit, Trash2, Shield, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
+import { Users, Plus, Edit, Trash2, Shield, Eye, EyeOff, AlertCircle, CheckCircle, RefreshCw } from 'lucide-react';
+import axios from 'axios';
+
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api';
 
 interface Usuario {
+  id: number;
   username: string;
-  password: string;
+  email: string | null;
   role: 'admin' | 'gerente' | 'usuario';
+  created_at: string;
 }
 
 export const GerenciarUsuarios: React.FC = () => {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [showForm, setShowForm] = useState(false);
-  const [editingUser, setEditingUser] = useState<string | null>(null);
-  const [showPassword, setShowPassword] = useState<{ [key: string]: boolean }>({});
+  const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
   // Form state
   const [formData, setFormData] = useState({
     username: '',
     password: '',
+    email: '',
     role: 'usuario' as 'admin' | 'gerente' | 'usuario'
   });
 
   // Carregar usuários do backend
+  const loadUsuarios = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('nexus_token');
+      const response = await axios.get(`${API_URL}/users`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setUsuarios(response.data);
+    } catch (err: any) {
+      console.error('Erro ao carregar usuários:', err);
+      setMessage({ type: 'error', text: 'Erro ao carregar usuários' });
+      setTimeout(() => setMessage(null), 3000);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    // Usuários atualizados do backend
-    const defaultUsers: Usuario[] = [
-      { username: 'admin', password: 'GILGAMESH999', role: 'admin' },
-      { username: 'gerente', password: 'GILGAMESH99', role: 'gerente' },
-      { username: 'usuario', password: 'GILGAMESH9', role: 'usuario' }
-    ];
-    setUsuarios(defaultUsers);
-    localStorage.setItem('nexus_usuarios', JSON.stringify(defaultUsers));
+    loadUsuarios();
   }, []);
 
-  const saveUsuarios = (newUsers: Usuario[]) => {
-    setUsuarios(newUsers);
-    localStorage.setItem('nexus_usuarios', JSON.stringify(newUsers));
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('nexus_token');
+      
+      await axios.post(`${API_URL}/register`, {
+        username: formData.username,
+        password: formData.password,
+        email: formData.email || null,
+        role: formData.role
+      }, {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
 
-    if (editingUser) {
-      // Editar usuário
-      const updated = usuarios.map(u => 
-        u.username === editingUser 
-          ? { ...formData }
-          : u
-      );
-      saveUsuarios(updated);
-      setMessage({ type: 'success', text: 'Usuário atualizado com sucesso!' });
-    } else {
-      // Verificar se usuário já existe
-      if (usuarios.find(u => u.username === formData.username)) {
-        setMessage({ type: 'error', text: 'Usuário já existe!' });
-        return;
-      }
-      // Adicionar novo usuário
-      saveUsuarios([...usuarios, formData]);
       setMessage({ type: 'success', text: 'Usuário criado com sucesso!' });
+      
+      // Resetar form
+      setFormData({ username: '', password: '', email: '', role: 'usuario' });
+      setShowForm(false);
+      
+      // Recarregar lista
+      await loadUsuarios();
+    } catch (err: any) {
+      const errorMsg = err.response?.data?.detail || 'Erro ao criar usuário';
+      setMessage({ type: 'error', text: errorMsg });
+    } finally {
+      setLoading(false);
+      setTimeout(() => setMessage(null), 3000);
     }
-
-    // Resetar form
-    setFormData({ username: '', password: '', role: 'usuario' });
-    setShowForm(false);
-    setEditingUser(null);
-
-    // Limpar mensagem após 3 segundos
-    setTimeout(() => setMessage(null), 3000);
   };
 
-  const handleEdit = (user: Usuario) => {
-    setFormData(user);
-    setEditingUser(user.username);
-    setShowForm(true);
-  };
-
-  const handleDelete = (username: string) => {
+  const handleDelete = async (userId: number, username: string) => {
     // Não permitir deletar o último admin
     const admins = usuarios.filter(u => u.role === 'admin');
-    if (admins.length === 1 && admins[0].username === username) {
+    if (admins.length === 1 && admins[0].id === userId) {
       setMessage({ type: 'error', text: 'Não é possível deletar o último administrador!' });
       setTimeout(() => setMessage(null), 3000);
       return;
     }
 
     if (window.confirm(`Tem certeza que deseja deletar o usuário "${username}"?`)) {
-      saveUsuarios(usuarios.filter(u => u.username !== username));
-      setMessage({ type: 'success', text: 'Usuário deletado com sucesso!' });
-      setTimeout(() => setMessage(null), 3000);
+      try {
+        setLoading(true);
+        const token = localStorage.getItem('nexus_token');
+        
+        await axios.delete(`${API_URL}/users/${userId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        setMessage({ type: 'success', text: 'Usuário deletado com sucesso!' });
+        
+        // Recarregar lista
+        await loadUsuarios();
+      } catch (err: any) {
+        const errorMsg = err.response?.data?.detail || 'Erro ao deletar usuário';
+        setMessage({ type: 'error', text: errorMsg });
+      } finally {
+        setLoading(false);
+        setTimeout(() => setMessage(null), 3000);
+      }
     }
   };
 
@@ -121,17 +145,26 @@ export const GerenciarUsuarios: React.FC = () => {
           </h1>
           <p className="text-sm text-gray-600 mt-1">Painel exclusivo de administração</p>
         </div>
-        <button
-          onClick={() => {
-            setShowForm(true);
-            setEditingUser(null);
-            setFormData({ username: '', password: '', role: 'usuario' });
-          }}
-          className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-2 rounded-lg hover:from-purple-700 hover:to-blue-700 flex items-center space-x-2 shadow-lg"
-        >
-          <Plus className="h-5 w-5" />
-          <span>Novo Usuário</span>
-        </button>
+        <div className="flex space-x-3">
+          <button
+            onClick={loadUsuarios}
+            disabled={loading}
+            className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 flex items-center space-x-2 border border-gray-300"
+          >
+            <RefreshCw className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} />
+            <span>Recarregar</span>
+          </button>
+          <button
+            onClick={() => {
+              setShowForm(true);
+              setFormData({ username: '', password: '', email: '', role: 'usuario' });
+            }}
+            className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-4 py-2 rounded-lg hover:from-purple-700 hover:to-blue-700 flex items-center space-x-2 shadow-lg"
+          >
+            <Plus className="h-5 w-5" />
+            <span>Novo Usuário</span>
+          </button>
+        </div>
       </div>
 
       {/* Mensagem de sucesso/erro */}
@@ -147,14 +180,12 @@ export const GerenciarUsuarios: React.FC = () => {
       {/* Formulário */}
       {showForm && (
         <div className="bg-white p-6 rounded-lg shadow-lg border-2 border-purple-200">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">
-            {editingUser ? 'Editar Usuário' : 'Novo Usuário'}
-          </h2>
+          <h2 className="text-lg font-bold text-gray-900 mb-4">Novo Usuário</h2>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Nome de Usuário
+                  Nome de Usuário *
                 </label>
                 <input
                   type="text"
@@ -162,12 +193,22 @@ export const GerenciarUsuarios: React.FC = () => {
                   onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
                   required
-                  disabled={!!editingUser}
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Senha
+                  Email (opcional)
+                </label>
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Senha *
                 </label>
                 <input
                   type="password"
@@ -175,11 +216,12 @@ export const GerenciarUsuarios: React.FC = () => {
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500"
                   required
+                  minLength={6}
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Nível de Acesso
+                  Nível de Acesso *
                 </label>
                 <select
                   value={formData.role}
@@ -195,16 +237,16 @@ export const GerenciarUsuarios: React.FC = () => {
             <div className="flex space-x-3">
               <button
                 type="submit"
-                className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-2 rounded-lg hover:from-purple-700 hover:to-blue-700"
+                disabled={loading}
+                className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-2 rounded-lg hover:from-purple-700 hover:to-blue-700 disabled:opacity-50"
               >
-                {editingUser ? 'Atualizar' : 'Criar'}
+                {loading ? 'Criando...' : 'Criar'}
               </button>
               <button
                 type="button"
                 onClick={() => {
                   setShowForm(false);
-                  setEditingUser(null);
-                  setFormData({ username: '', password: '', role: 'usuario' });
+                  setFormData({ username: '', password: '', email: '', role: 'usuario' });
                 }}
                 className="bg-gray-200 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-300"
               >
@@ -231,10 +273,13 @@ export const GerenciarUsuarios: React.FC = () => {
                   Usuário
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Senha
+                  Email
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Nível
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Criado em
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Ações
@@ -242,54 +287,56 @@ export const GerenciarUsuarios: React.FC = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {usuarios.map((user) => (
-                <tr key={user.username} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                        user.role === 'admin' ? 'bg-red-100' : user.role === 'gerente' ? 'bg-blue-100' : 'bg-green-100'
-                      }`}>
-                        <Users className={`h-5 w-5 ${
-                          user.role === 'admin' ? 'text-red-600' : user.role === 'gerente' ? 'text-blue-600' : 'text-green-600'
-                        }`} />
-                      </div>
-                      <span className="ml-3 text-sm font-medium text-gray-900">{user.username}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-sm font-mono text-gray-600">
-                        {showPassword[user.username] ? user.password : '••••••••'}
-                      </span>
-                      <button
-                        onClick={() => setShowPassword({ ...showPassword, [user.username]: !showPassword[user.username] })}
-                        className="text-gray-400 hover:text-gray-600"
-                      >
-                        {showPassword[user.username] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </button>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {getRoleBadge(user.role)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button
-                      onClick={() => handleEdit(user)}
-                      className="text-blue-600 hover:text-blue-900 mr-3"
-                      title="Editar"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(user.username)}
-                      className="text-red-600 hover:text-red-900"
-                      title="Deletar"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+              {loading && usuarios.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                    <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-2" />
+                    Carregando usuários...
                   </td>
                 </tr>
-              ))}
+              ) : usuarios.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                    Nenhum usuário encontrado
+                  </td>
+                </tr>
+              ) : (
+                usuarios.map((user) => (
+                  <tr key={user.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                          user.role === 'admin' ? 'bg-red-100' : user.role === 'gerente' ? 'bg-blue-100' : 'bg-green-100'
+                        }`}>
+                          <Users className={`h-5 w-5 ${
+                            user.role === 'admin' ? 'text-red-600' : user.role === 'gerente' ? 'text-blue-600' : 'text-green-600'
+                          }`} />
+                        </div>
+                        <span className="ml-3 text-sm font-medium text-gray-900">{user.username}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                      {user.email || '-'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {getRoleBadge(user.role)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                      {new Date(user.created_at).toLocaleDateString('pt-BR')}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <button
+                        onClick={() => handleDelete(user.id, user.username)}
+                        disabled={loading}
+                        className="text-red-600 hover:text-red-900 disabled:opacity-50"
+                        title="Deletar"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -304,8 +351,8 @@ export const GerenciarUsuarios: React.FC = () => {
             <ul className="list-disc list-inside space-y-1">
               <li>Apenas administradores podem acessar este painel</li>
               <li>Não é possível deletar o último administrador</li>
-              <li>As senhas são armazenadas localmente no navegador</li>
-              <li>Faça backup regular dos usuários (Export JSON)</li>
+              <li>As senhas dos usuários são criptografadas no banco de dados</li>
+              <li>Use o botão "Recarregar" para atualizar a lista em tempo real</li>
             </ul>
           </div>
         </div>
