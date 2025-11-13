@@ -7,8 +7,9 @@ import { TransacaoForm } from './components/TransacaoForm';
 import { ChatBot } from './components/ChatBot';
 import { ClientePanel } from './components/ClientePanel';
 import { ProdutoPanel } from './components/ProdutoPanel';
-import { useLocalStorage } from './hooks/useLocalStorage';
+import { useAPI } from './hooks/useAPI';
 import { Produto, Cliente, Transacao, Categoria, AnexoPDF } from './types';
+import { produtosAPI, clientesAPI, transacoesAPI, categoriasAPI } from './services/api';
 import { ChatBot as ChatBotService } from './services/chatBot';
 import { CategoriaForm } from './components/CategoriaForm';
 import { VendaForm } from './components/VendaForm';
@@ -33,8 +34,9 @@ function App() {
     }
   }, []);
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     setIsAuthenticated(true);
+    await reloadData(); // Carregar dados do usuário
   };
 
   const handleLogout = () => {
@@ -45,29 +47,20 @@ function App() {
     setIsAuthenticated(false);
   };
 
-  // MODO TEMPORÁRIO: Voltar para localStorage
-  const [produtos, setProdutos] = useLocalStorage<Produto[]>('produtos', []);
-  const [clientes, setClientes] = useLocalStorage<Cliente[]>('clientes', []);
-  const [transacoes, setTransacoes] = useLocalStorage<Transacao[]>('transacoes', []);
-  const [categorias, setCategorias] = useLocalStorage<Categoria[]>('categorias', [
-    {
-      id: '1',
-      nome: 'Eletrônicos',
-      descricao: 'Produtos eletrônicos em geral',
-      cor: '#3B82F6',
-      createdAt: new Date()
-    },
-    {
-      id: '2',
-      nome: 'Placas Solares',
-      descricao: 'Equipamentos de energia solar',
-      cor: '#F59E0B',
-      createdAt: new Date()
-    }
-  ]);
-  
-  const loading = false;
-  const error = null;
+  // Usar API para gerenciar dados
+  const {
+    produtos,
+    setProdutos,
+    clientes,
+    setClientes,
+    transacoes,
+    setTransacoes,
+    categorias,
+    setCategorias,
+    loading,
+    error,
+    reloadData
+  } = useAPI();
   
   const [showProdutoForm, setShowProdutoForm] = useState(false);
   const [showClienteForm, setShowClienteForm] = useState(false);
@@ -88,26 +81,22 @@ function App() {
 
   const chatBot = new ChatBotService(produtos, clientes, transacoes);
 
-  const handleAddProduto = (produtoData: Omit<Produto, 'id' | 'createdAt'>) => {
-    if (editingProduto) {
-      // Editando produto existente
-      const produtosAtualizados = produtos.map(p => 
-        p.id === editingProduto.id 
-          ? { ...editingProduto, ...produtoData }
-          : p
-      );
-      setProdutos(produtosAtualizados);
-      setEditingProduto(null);
-    } else {
-      // Adicionando novo produto
-      const novoProduto: Produto = {
-        ...produtoData,
-        id: Date.now().toString(),
-        createdAt: new Date()
-      };
-      setProdutos([...produtos, novoProduto]);
+  const handleAddProduto = async (produtoData: Omit<Produto, 'id' | 'createdAt'>) => {
+    try {
+      if (editingProduto) {
+        // Editando produto existente
+        const produtoAtualizado = await produtosAPI.update(editingProduto.id, produtoData);
+        setProdutos(produtos.map(p => p.id === editingProduto.id ? produtoAtualizado : p));
+        setEditingProduto(null);
+      } else {
+        // Adicionando novo produto
+        const novoProduto = await produtosAPI.create(produtoData);
+        setProdutos([...produtos, novoProduto]);
+      }
+      setShowProdutoForm(false);
+    } catch (err: any) {
+      alert(`Erro ao salvar produto: ${err.response?.data?.detail || err.message}`);
     }
-    setShowProdutoForm(false);
   };
 
   const handleEditProduto = (produto: Produto) => {
@@ -115,32 +104,33 @@ function App() {
     setShowProdutoForm(true);
   };
 
-  const handleDeleteProduto = (produtoId: string) => {
+  const handleDeleteProduto = async (produtoId: string) => {
     if (window.confirm('Tem certeza que deseja excluir este produto?')) {
-      setProdutos(produtos.filter(p => p.id !== produtoId));
+      try {
+        await produtosAPI.delete(produtoId);
+        setProdutos(produtos.filter(p => p.id !== produtoId));
+      } catch (err: any) {
+        alert(`Erro ao deletar produto: ${err.response?.data?.detail || err.message}`);
+      }
     }
   };
 
-  const handleAddCliente = (clienteData: Omit<Cliente, 'id' | 'createdAt'>) => {
-    if (editingCliente) {
-      // Editando cliente existente
-      const clientesAtualizados = clientes.map(c => 
-        c.id === editingCliente.id 
-          ? { ...editingCliente, ...clienteData }
-          : c
-      );
-      setClientes(clientesAtualizados);
-      setEditingCliente(null);
-    } else {
-      // Adicionando novo cliente
-      const novoCliente: Cliente = {
-        ...clienteData,
-        id: Date.now().toString(),
-        createdAt: new Date()
-      };
-      setClientes([...clientes, novoCliente]);
+  const handleAddCliente = async (clienteData: Omit<Cliente, 'id' | 'createdAt'>) => {
+    try {
+      if (editingCliente) {
+        // Editando cliente existente
+        const clienteAtualizado = await clientesAPI.update(editingCliente.id, clienteData);
+        setClientes(clientes.map(c => c.id === editingCliente.id ? clienteAtualizado : c));
+        setEditingCliente(null);
+      } else {
+        // Adicionando novo cliente
+        const novoCliente = await clientesAPI.create(clienteData);
+        setClientes([...clientes, novoCliente]);
+      }
+      setShowClienteForm(false);
+    } catch (err: any) {
+      alert(`Erro ao salvar cliente: ${err.response?.data?.detail || err.message}`);
     }
-    setShowClienteForm(false);
   };
 
   const handleEditCliente = (cliente: Cliente) => {
@@ -148,32 +138,33 @@ function App() {
     setShowClienteForm(true);
   };
 
-  const handleDeleteCliente = (clienteId: string) => {
+  const handleDeleteCliente = async (clienteId: string) => {
     if (window.confirm('Tem certeza que deseja excluir este cliente?')) {
-      setClientes(clientes.filter(c => c.id !== clienteId));
+      try {
+        await clientesAPI.delete(clienteId);
+        setClientes(clientes.filter(c => c.id !== clienteId));
+      } catch (err: any) {
+        alert(`Erro ao deletar cliente: ${err.response?.data?.detail || err.message}`);
+      }
     }
   };
 
-  const handleAddCategoria = (categoriaData: Omit<Categoria, 'id' | 'createdAt'>) => {
-    if (editingCategoria) {
-      // Editando categoria existente
-      const categoriasAtualizadas = categorias.map(c => 
-        c.id === editingCategoria.id 
-          ? { ...editingCategoria, ...categoriaData }
-          : c
-      );
-      setCategorias(categoriasAtualizadas);
-      setEditingCategoria(null);
-    } else {
-      // Adicionando nova categoria
-      const novaCategoria: Categoria = {
-        ...categoriaData,
-        id: Date.now().toString(),
-        createdAt: new Date()
-      };
-      setCategorias([...categorias, novaCategoria]);
+  const handleAddCategoria = async (categoriaData: Omit<Categoria, 'id' | 'createdAt'>) => {
+    try {
+      if (editingCategoria) {
+        // Editando categoria existente
+        const categoriaAtualizada = await categoriasAPI.update(editingCategoria.id, categoriaData);
+        setCategorias(categorias.map(c => c.id === editingCategoria.id ? categoriaAtualizada : c));
+        setEditingCategoria(null);
+      } else {
+        // Adicionando nova categoria
+        const novaCategoria = await categoriasAPI.create(categoriaData);
+        setCategorias([...categorias, novaCategoria]);
+      }
+      setShowCategoriaForm(false);
+    } catch (err: any) {
+      alert(`Erro ao salvar categoria: ${err.response?.data?.detail || err.message}`);
     }
-    setShowCategoriaForm(false);
   };
 
   const handleEditCategoria = (categoria: Categoria) => {
@@ -181,7 +172,7 @@ function App() {
     setShowCategoriaForm(true);
   };
 
-  const handleDeleteCategoria = (categoriaId: string) => {
+  const handleDeleteCategoria = async (categoriaId: string) => {
     const produtosComCategoria = produtos.filter(p => p.categoriaId === categoriaId);
     if (produtosComCategoria.length > 0) {
       alert(`Não é possível excluir esta categoria pois existem ${produtosComCategoria.length} produtos vinculados a ela.`);
@@ -189,49 +180,60 @@ function App() {
     }
     
     if (window.confirm('Tem certeza que deseja excluir esta categoria?')) {
-      setCategorias(categorias.filter(c => c.id !== categoriaId));
-    }
-  };
-
-  const handleAddTransacao = (transacaoData: Omit<Transacao, 'id' | 'createdAt'>) => {
-    const novaTransacao: Transacao = {
-      ...transacaoData,
-      id: Date.now().toString(),
-      createdAt: new Date()
-    };
-
-    // Atualizar estoque do produto
-    const produtoIndex = produtos.findIndex(p => p.id === transacaoData.produtoId);
-    if (produtoIndex !== -1) {
-      const novosProdutos = [...produtos];
-      if (transacaoData.tipo === 'entrada') {
-        novosProdutos[produtoIndex].quantidade += transacaoData.quantidade;
-      } else {
-        novosProdutos[produtoIndex].quantidade -= transacaoData.quantidade;
+      try {
+        await categoriasAPI.delete(categoriaId);
+        setCategorias(categorias.filter(c => c.id !== categoriaId));
+      } catch (err: any) {
+        alert(`Erro ao deletar categoria: ${err.response?.data?.detail || err.message}`);
       }
-      setProdutos(novosProdutos);
     }
-
-    setTransacoes([...transacoes, novaTransacao]);
-    setShowTransacaoForm(false);
   };
 
-  const handleUndoTransacao = (transacao: Transacao) => {
-    if (window.confirm('Tem certeza que deseja desfazer esta transação?')) {
-      // Reverter alteração no estoque
-      const produtoIndex = produtos.findIndex(p => p.id === transacao.produtoId);
+  const handleAddTransacao = async (transacaoData: Omit<Transacao, 'id' | 'createdAt'>) => {
+    try {
+      const novaTransacao = await transacoesAPI.create(transacaoData);
+      
+      // Atualizar estoque localmente (o backend já atualizou)
+      const produtoIndex = produtos.findIndex(p => p.id === transacaoData.produtoId);
       if (produtoIndex !== -1) {
         const novosProdutos = [...produtos];
-        if (transacao.tipo === 'entrada') {
-          novosProdutos[produtoIndex].quantidade -= transacao.quantidade;
+        if (transacaoData.tipo === 'entrada') {
+          novosProdutos[produtoIndex].quantidade += transacaoData.quantidade;
         } else {
-          novosProdutos[produtoIndex].quantidade += transacao.quantidade;
+          novosProdutos[produtoIndex].quantidade -= transacaoData.quantidade;
         }
         setProdutos(novosProdutos);
       }
 
-      // Remover transação
-      setTransacoes(transacoes.filter(t => t.id !== transacao.id));
+      setTransacoes([...transacoes, novaTransacao]);
+      setShowTransacaoForm(false);
+    } catch (err: any) {
+      alert(`Erro ao criar transação: ${err.response?.data?.detail || err.message}`);
+    }
+  };
+
+  const handleUndoTransacao = async (transacao: Transacao) => {
+    if (window.confirm('Tem certeza que deseja desfazer esta transação?')) {
+      try {
+        await transacoesAPI.delete(transacao.id);
+        
+        // Reverter alteração no estoque localmente
+        const produtoIndex = produtos.findIndex(p => p.id === transacao.produtoId);
+        if (produtoIndex !== -1) {
+          const novosProdutos = [...produtos];
+          if (transacao.tipo === 'entrada') {
+            novosProdutos[produtoIndex].quantidade -= transacao.quantidade;
+          } else {
+            novosProdutos[produtoIndex].quantidade += transacao.quantidade;
+          }
+          setProdutos(novosProdutos);
+        }
+
+        // Remover transação
+        setTransacoes(transacoes.filter(t => t.id !== transacao.id));
+      } catch (err: any) {
+        alert(`Erro ao desfazer transação: ${err.response?.data?.detail || err.message}`);
+      }
     }
   };
 
@@ -240,7 +242,7 @@ function App() {
     setActiveTab('cliente-panel');
   };
 
-  const handleVenda = (vendaData: {
+  const handleVenda = async (vendaData: {
     clienteId: string;
     numeroPedido?: string;
     itens: Array<{
@@ -253,42 +255,43 @@ function App() {
     observacoes?: string;
     anexos?: AnexoPDF[];
   }) => {
-    const novasTransacoes: Transacao[] = [];
-    const novosProdutos = [...produtos];
-    const vendaId = `venda-${Date.now()}`;
-    const dataVenda = new Date();
+    try {
+      const novasTransacoes: Transacao[] = [];
+      const novosProdutos = [...produtos];
 
-    // Criar uma transação para cada item da venda
-    vendaData.itens.forEach((item, index) => {
-      const transacao: Transacao = {
-        id: `${vendaId}-item-${index}`,
-        tipo: 'saida',
-        produtoId: item.produtoId,
-        clienteId: vendaData.clienteId,
-        numeroPedido: vendaData.numeroPedido,
-        quantidade: item.quantidade,
-        valorUnitario: item.valorUnitario,
-        valorTotal: item.valorTotal,
-        observacoes: vendaData.observacoes,
-        anexos: vendaData.anexos,
-        createdAt: dataVenda
-      };
-      novasTransacoes.push(transacao);
+      // Criar uma transação para cada item da venda via API
+      for (const item of vendaData.itens) {
+        const transacaoData = {
+          tipo: 'saida' as const,
+          produtoId: item.produtoId,
+          clienteId: vendaData.clienteId,
+          numeroPedido: vendaData.numeroPedido,
+          quantidade: item.quantidade,
+          valorUnitario: item.valorUnitario,
+          valorTotal: item.valorTotal,
+          observacoes: vendaData.observacoes,
+        };
+        
+        const novaTransacao = await transacoesAPI.create(transacaoData);
+        novasTransacoes.push(novaTransacao);
 
-      // Atualizar estoque
-      const produtoIndex = novosProdutos.findIndex(p => p.id === item.produtoId);
-      if (produtoIndex !== -1) {
-        novosProdutos[produtoIndex].quantidade -= item.quantidade;
+        // Atualizar estoque localmente
+        const produtoIndex = novosProdutos.findIndex(p => p.id === item.produtoId);
+        if (produtoIndex !== -1) {
+          novosProdutos[produtoIndex].quantidade -= item.quantidade;
+        }
       }
-    });
 
-    // Atualizar estados
-    setProdutos(novosProdutos);
-    setTransacoes([...transacoes, ...novasTransacoes]);
-    setShowVendaForm(false);
-    
-    // Mostrar mensagem de sucesso
-    alert(`Venda realizada com sucesso! Total: R$ ${vendaData.valorTotal.toFixed(2)}`);
+      // Atualizar estados
+      setProdutos(novosProdutos);
+      setTransacoes([...transacoes, ...novasTransacoes]);
+      setShowVendaForm(false);
+      
+      // Mostrar mensagem de sucesso
+      alert(`Venda realizada com sucesso! Total: R$ ${vendaData.valorTotal.toFixed(2)}`);
+    } catch (err: any) {
+      alert(`Erro ao realizar venda: ${err.response?.data?.detail || err.message}`);
+    }
   };
 
   const handleViewProdutoPanel = (produto: Produto) => {
